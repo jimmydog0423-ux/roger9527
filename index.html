@@ -4,28 +4,87 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#100b1f" />
+
   <title>羅傑全資產戰情室｜吉米狗製作</title>
+
   <link rel="icon" href="data:," />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.googleapis.com"
+  />
+
+  <link
+    rel="preconnect"
+    href="https://fonts.gstatic.com"
+    crossorigin
+  />
+
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="styles.css?v=7"
+  />
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <div class="noise"></div>
   <div id="particles" aria-hidden="true"></div>
 
   <header class="hero">
     <div>
-      <div class="live-row"><span class="live-dot"></span><span>LIVE PORTFOLIO ARENA</span></div>
+      <div class="live-row">
+        <span class="live-dot"></span>
+        <span>LIVE PORTFOLIO ARENA</span>
+      </div>
+
       <h1>羅傑全資產戰情室</h1>
-      <p class="subtitle">每 60 秒更新、支援手動重整、互動音效與損益爆擊</p>
+
+      <p class="subtitle">
+        每 60 秒更新、支援手動重整、互動音效與損益爆擊
+      </p>
     </div>
+
     <div class="hero-actions">
-      <button id="refreshBtn" class="btn primary">立即更新</button>
-      <button id="chaosBtn" class="btn danger">損益大爆擊</button>
-      <button id="soundBtn" class="btn ghost" aria-pressed="true">音效：開</button>
-      <button id="autoRefreshBtn" class="btn ghost" aria-pressed="true">自動更新：開</button>
+      <button
+        id="refreshBtn"
+        class="btn primary"
+        type="button"
+      >
+        立即更新
+      </button>
+
+      <button
+        id="chaosBtn"
+        class="btn danger"
+        type="button"
+      >
+        損益大爆擊
+      </button>
+
+      <button
+        id="soundBtn"
+        class="btn ghost"
+        type="button"
+        aria-pressed="true"
+      >
+        音效：開
+      </button>
+
+      <button
+        id="autoRefreshBtn"
+        class="btn ghost"
+        type="button"
+        aria-pressed="true"
+      >
+        自動更新：開
+      </button>
     </div>
   </header>
 
@@ -36,16 +95,19 @@
         <strong id="totalPnl">計算中…</strong>
         <small id="totalPnlPct">—</small>
       </article>
+
       <article class="summary-card">
         <span>總投入成本</span>
         <strong id="totalCost">—</strong>
         <small>台幣估算</small>
       </article>
+
       <article class="summary-card">
         <span>最新美元匯率</span>
         <strong id="usdTwd">—</strong>
         <small id="fxSource">Yahoo Finance</small>
       </article>
+
       <article class="summary-card">
         <span>更新時間</span>
         <strong id="updatedAt">尚未更新</strong>
@@ -53,7 +115,10 @@
       </article>
     </section>
 
-    <section class="ticker-wrap" aria-label="即時跑馬燈">
+    <section
+      class="ticker-wrap"
+      aria-label="即時跑馬燈"
+    >
       <div id="ticker" class="ticker"></div>
     </section>
 
@@ -63,44 +128,86 @@
         <strong id="worstHolding">—</strong>
         <small id="worstPnl">—</small>
       </article>
+
       <article class="rank-card">
         <span>目前最佳表現</span>
         <strong id="bestHolding">—</strong>
         <small id="bestPnl">—</small>
       </article>
+
       <article class="rank-card status-card">
         <span>行情連線狀態</span>
         <strong id="apiStatus">準備連線</strong>
-        <small id="apiDetail">Cloudflare Worker + Yahoo Finance</small>
+        <small id="apiDetail">
+          Cloudflare Worker + Yahoo Finance
+        </small>
       </article>
     </section>
 
-    <section class="section-head">
-      <div>
-        <p class="eyebrow">BATTLE CARDS</p>
-        <h2>持倉損益擂台</h2>
+    <!-- 台股區 -->
+    <section class="market-section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">TAIWAN MARKET</p>
+          <h2>台股持倉</h2>
+        </div>
+
+        <p>台灣市場持有股票與 ETF</p>
       </div>
-      <p>點擊股票卡片可觸發隨機音效與爆擊動畫</p>
+
+      <section
+        id="twPortfolio"
+        class="portfolio-grid"
+        aria-live="polite"
+      ></section>
     </section>
 
-    <section id="portfolio" class="portfolio-grid" aria-live="polite"></section>
+    <!-- 美股區 -->
+    <section class="market-section">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">UNITED STATES MARKET</p>
+          <h2>美股持倉</h2>
+        </div>
+
+        <p>美國市場股票與 ETF</p>
+      </div>
+
+      <section
+        id="usPortfolio"
+        class="portfolio-grid"
+        aria-live="polite"
+      ></section>
+    </section>
 
     <section class="links-section">
       <div>
         <p class="eyebrow">STREAMER LINKS</p>
         <h2>前往實況主頻道</h2>
       </div>
-      <div id="socialLinks" class="social-links"></div>
+
+      <div
+        id="socialLinks"
+        class="social-links"
+      ></div>
     </section>
   </main>
 
   <footer>
-    <span>資料僅供娛樂展示，不構成投資建議。</span>
+    <span>
+      資料僅供娛樂展示，不構成投資建議。
+    </span>
+
     <strong>製作人：吉米狗</strong>
   </footer>
 
-  <div id="toast" class="toast" role="status"></div>
-  <script src="config.js"></script>
-  <script src="app.js"></script>
+  <div
+    id="toast"
+    class="toast"
+    role="status"
+  ></div>
+
+  <script src="config.js?v=7"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>
