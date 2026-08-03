@@ -265,7 +265,10 @@
 
   renderSocials();
   render();
-  $("#autoRefreshBtn").textContent = `自動更新：${state.autoRefresh ? "開" : "關"}`;
-  $("#autoRefreshBtn").setAttribute("aria-pressed", String(state.autoRefresh));
+  const autoRefreshBtn = $("#autoRefreshBtn");
+  if (autoRefreshBtn) {
+    autoRefreshBtn.textContent = `自動更新：${state.autoRefresh ? "開" : "關"}`;
+    autoRefreshBtn.setAttribute("aria-pressed", String(state.autoRefresh));
+  }
   setTimeout(refresh, 400);
 })();
