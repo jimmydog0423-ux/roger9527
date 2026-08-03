@@ -4,9 +4,9 @@ window.APP_CONFIG = {
   fallbackUsdTwd: 32.38,
 
   socialLinks: [
-    { name: "Twitch", url: "https://www.twitch.tv/", icon: "TW" },
-    { name: "Facebook", url: "https://www.facebook.com/", icon: "FB" },
-    { name: "YouTube", url: "https://www.youtube.com/", icon: "YT" }
+    { name: "Twitch", url: "https://www.twitch.tv/roger9527", icon: "TW" },
+    { name: "Facebook", url: "https://www.facebook.com/Roger95279527", icon: "FB" },
+    { name: "YouTube", url: "https://www.youtube.com/@Roger9527-sb", icon: "YT" }
   ],
 
   holdings: [
