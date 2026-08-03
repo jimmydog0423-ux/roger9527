@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#100b1f" />
+  <title>羅傑全資產戰情室｜吉米狗製作</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;600;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="noise"></div>
+  <div id="particles" aria-hidden="true"></div>
+
+  <header class="hero">
+    <div>
+      <p class="eyebrow">LIVE PORTFOLIO ARENA</p>
+      <h1>羅傑全資產戰情室</h1>
+      <p class="subtitle">每分鐘更新 · 手動重整 · 互動音效 · 損益爆擊</p>
+    </div>
+    <div class="hero-actions">
+      <button id="refreshBtn" class="btn primary">立即更新</button>
+      <button id="chaosBtn" class="btn danger">損益大爆擊</button>
+      <button id="soundBtn" class="btn ghost" aria-pressed="true">音效：開</button>
+      <button id="settingsBtn" class="btn ghost">API 設定</button>
+    </div>
+  </header>
+
+  <main>
+    <section class="summary-grid">
+      <article class="summary-card total">
+        <span>目前總損益</span>
+        <strong id="totalPnl">計算中…</strong>
+        <small id="totalPnlPct">—</small>
+      </article>
+      <article class="summary-card">
+        <span>總投入成本</span>
+        <strong id="totalCost">—</strong>
+        <small>台幣估算</small>
+      </article>
+      <article class="summary-card">
+        <span>最新美元匯率</span>
+        <strong id="usdTwd">—</strong>
+        <small id="fxSource">預設匯率</small>
+      </article>
+      <article class="summary-card">
+        <span>更新時間</span>
+        <strong id="updatedAt">尚未更新</strong>
+        <small id="countdown">60 秒後自動更新</small>
+      </article>
+    </section>
+
+    <section class="ticker-wrap" aria-label="即時跑馬燈">
+      <div id="ticker" class="ticker"></div>
+    </section>
+
+    <section class="section-head">
+      <div>
+        <p class="eyebrow">BATTLE CARDS</p>
+        <h2>持倉損益擂台</h2>
+      </div>
+      <p>點擊卡片會觸發隨機事件與音效</p>
+    </section>
+
+    <section id="portfolio" class="portfolio-grid" aria-live="polite"></section>
+
+    <section class="event-stage">
+      <div id="sprite" class="sprite" role="button" tabindex="0" aria-label="互動精靈">
+        <div class="sprite-face">●ᴥ●</div>
+        <div class="sprite-shadow"></div>
+      </div>
+      <div>
+        <p class="eyebrow">INTERACTIVE PET</p>
+        <h2>吉米精靈</h2>
+        <p id="spriteMessage">點我，我會隨機評論今天的損益。</p>
+      </div>
+      <button id="summonBtn" class="btn primary">召喚事件</button>
+    </section>
+
+    <section class="links-section">
+      <div>
+        <p class="eyebrow">STREAMER LINKS</p>
+        <h2>前往實況主頻道</h2>
+      </div>
+      <div id="socialLinks" class="social-links"></div>
+    </section>
+  </main>
+
+  <footer>
+    <span>資料僅供娛樂展示，不構成投資建議。</span>
+    <strong>製作人：吉米狗</strong>
+  </footer>
+
+  <dialog id="settingsDialog">
+    <form method="dialog" class="settings-form">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">DATA SOURCE</p>
+          <h2>即時股價 API 設定</h2>
+        </div>
+        <button value="cancel" class="icon-btn" aria-label="關閉">×</button>
+      </div>
+      <label>
+        Twelve Data API Key
+        <input id="apiKeyInput" type="password" autocomplete="off" placeholder="貼上 API Key（只存在此瀏覽器）" />
+      </label>
+      <p class="hint">GitHub Pages 是靜態網站，API Key 會由瀏覽器直接呼叫。此版本只存於 localStorage，不會寫進 GitHub。</p>
+      <label class="switch-row">
+        <input id="autoRefreshInput" type="checkbox" checked />
+        每 60 秒自動更新
+      </label>
+      <div class="dialog-actions">
+        <button id="clearKeyBtn" type="button" class="btn ghost">清除 Key</button>
+        <button id="saveSettingsBtn" value="default" class="btn primary">儲存並更新</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status"></div>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
