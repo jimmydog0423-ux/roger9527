@@ -6,6 +6,8 @@
 
   const state = {
     prices: Object.fromEntries(C.holdings.map(h => [h.id, h.fallbackPrice])),
+    histories: Object.fromEntries(C.holdings.map(h => [h.id, []])),
+    charts: {},
     usdTwd: C.fallbackUsdTwd,
     sound: true,
     countdown: C.refreshSeconds,
@@ -20,8 +22,8 @@
     currency,
     maximumFractionDigits: currency === "TWD" ? 0 : 2
   }).format(Number(value) || 0);
-  const number = value => new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 2 }).format(Number(value) || 0);
-  const signedTwd = value => `${value >= 0 ? "+" : "-"}${money(Math.abs(value), "TWD")}`;
+  const num = value => new Intl.NumberFormat("zh-TW", { maximumFractionDigits: 2 }).format(Number(value) || 0);
+  const signed = value => `${value >= 0 ? "+" : "-"}${money(Math.abs(value), "TWD")}`;
 
   function holdingData(h) {
     const price = Number(state.prices[h.id] ?? h.fallbackPrice);
@@ -350,6 +352,65 @@ function createStockCard(holding) {
       signed(best.pnlTwd);
   }
 }
+
+  function renderCharts(holdings) {
+    if (typeof Chart === "undefined") {
+      console.warn("Chart.js 尚未載入");
+      return;
+    }
+
+    for (const holding of holdings) {
+      const canvas = document.getElementById(`chart-${holding.id}`);
+      if (!canvas) continue;
+
+      const history = state.histories[holding.id] || [];
+      if (state.charts[holding.id]) {
+        state.charts[holding.id].destroy();
+        delete state.charts[holding.id];
+      }
+
+      if (!history.length) continue;
+
+      const labels = history.map(item =>
+        new Date(item.time * 1000).toLocaleTimeString("zh-TW", {
+          hour: "2-digit", minute: "2-digit", hour12: false
+        })
+      );
+      const prices = history.map(item => item.price);
+      const isUp = prices[prices.length - 1] >= prices[0];
+
+      state.charts[holding.id] = new Chart(canvas, {
+        type: "line",
+        data: {
+          labels,
+          datasets: [{
+            data: prices,
+            borderColor: isUp ? "#38f29a" : "#ff385c",
+            backgroundColor: isUp ? "rgba(56,242,154,.12)" : "rgba(255,56,92,.12)",
+            fill: true,
+            borderWidth: 2,
+            pointRadius: 0,
+            pointHoverRadius: 4,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: "index" },
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: context => money(context.parsed.y, holding.currency) } }
+          },
+          scales: {
+            x: { display: false, grid: { display: false } },
+            y: { display: false, grid: { display: false } }
+          }
+        }
+      });
+    }
+  }
+
   async function fetchYahooWorker() {
     const symbols = [...new Set([...C.holdings.map(h => h.apiSymbol), "USDTWD=X"])];
     const url = `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`;
@@ -371,6 +432,11 @@ function createStockCard(holding) {
       const quote = result.data[h.apiSymbol];
       if (quote?.success && Number.isFinite(Number(quote.price))) {
         state.prices[h.id] = Number(quote.price);
+        if (Array.isArray(quote.history)) {
+          state.histories[h.id] = quote.history
+            .filter(item => Number.isFinite(Number(item?.time)) && Number.isFinite(Number(item?.price)))
+            .map(item => ({ time: Number(item.time), price: Number(item.price) }));
+        }
         successCount++;
       } else {
         failed.push(h.apiSymbol);
