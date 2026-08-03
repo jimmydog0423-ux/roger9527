@@ -194,9 +194,28 @@ function renderSocials(){ $('#socialLinks').innerHTML=C.socialLinks.map(x=>`<a c
 
 $('#refreshBtn').addEventListener('click',refresh);$('#chaosBtn').addEventListener('click',chaos);$('#sprite').addEventListener('click',spriteEvent);$('#sprite').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')spriteEvent()});$('#summonBtn').addEventListener('click',spriteEvent);
 $('#soundBtn').addEventListener('click',e=>{state.sound=!state.sound;e.currentTarget.textContent=`音效：${state.sound?'開':'關'}`;e.currentTarget.setAttribute('aria-pressed',String(state.sound));if(state.sound)playTone('success')});
-$('#settingsBtn').addEventListener('click',()=>{ $('#apiKeyInput').value=localStorage.getItem('twelveDataKey')||'';$('#autoRefreshInput').checked=state.autoRefresh;$('#settingsDialog').showModal() });
-$('#saveSettingsBtn').addEventListener('click',()=>{const k=$('#apiKeyInput').value.trim();if(k)localStorage.setItem('twelveDataKey',k);state.autoRefresh=$('#autoRefreshInput').checked;localStorage.setItem('autoRefresh',String(state.autoRefresh));setTimeout(refresh,0)});
-$('#clearKeyBtn').addEventListener('click',()=>{localStorage.removeItem('twelveDataKey');$('#apiKeyInput').value='';toast('API Key 已清除')});
+document
+  .querySelector("#settingsBtn")
+  .addEventListener("click", () => {
+    document.querySelector("#autoRefreshInput").checked =
+      state.autoRefresh;
+
+    document.querySelector("#settingsDialog").showModal();
+  });
+document
+  .querySelector("#saveSettingsBtn")
+  .addEventListener("click", () => {
+    state.autoRefresh =
+      document.querySelector("#autoRefreshInput").checked;
+
+    localStorage.setItem(
+      "autoRefresh",
+      String(state.autoRefresh)
+    );
+
+    setTimeout(refresh, 0);
+  });
+
 setInterval(()=>{if(!state.autoRefresh){$('#countdown').textContent='自動更新已關閉';return}state.countdown--;if(state.countdown<=0)refresh();$('#countdown').textContent=`${Math.max(0,state.countdown)} 秒後自動更新`},1000);
 renderSocials();
 render();
