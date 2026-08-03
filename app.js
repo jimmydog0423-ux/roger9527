@@ -38,53 +38,318 @@
   }
 
   function render() {
-    const data = C.holdings.map(holdingData);
-    const totalPnl = data.reduce((sum, h) => sum + h.pnlTwd, 0);
-    const totalCost = data.reduce((sum, h) => sum + h.costTwd, 0);
-    const pct = totalCost ? totalPnl / totalCost * 100 : 0;
+  const data = C.holdings.map(holdingData);
 
-    $("#totalPnl").textContent = signedTwd(totalPnl);
-    $("#totalPnlPct").textContent = `${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%`;
-    $(".summary-card.total").classList.toggle("loss", totalPnl < 0);
-    $(".summary-card.total").classList.toggle("profit", totalPnl >= 0);
-    $("#totalCost").textContent = money(totalCost, "TWD");
-    $("#usdTwd").textContent = state.usdTwd.toFixed(3);
+  const totalPnl = data.reduce(
+    (sum, holding) => sum + holding.pnlTwd,
+    0
+  );
 
-    const sorted = [...data].sort((a, b) => a.pnlTwd - b.pnlTwd);
-    const worst = sorted[0];
-    const best = sorted[sorted.length - 1];
-    $("#worstHolding").textContent = worst?.name || "—";
-    $("#worstPnl").textContent = worst ? signedTwd(worst.pnlTwd) : "—";
-    $("#bestHolding").textContent = best?.name || "—";
-    $("#bestPnl").textContent = best ? signedTwd(best.pnlTwd) : "—";
+  const totalCost = data.reduce(
+    (sum, holding) => sum + holding.costTwd,
+    0
+  );
 
-    $("#portfolio").innerHTML = data.map(h => {
-      const isLoss = h.pnlTwd < 0;
-      const diff = h.price - h.cost;
-      return `<article class="stock-card ${isLoss ? "is-loss" : "is-profit"}" data-id="${h.id}" style="--glow:${isLoss ? "var(--red)" : "var(--green)"}">
-        <div class="card-top">
-          <div><div class="ticker-code">${h.ticker}</div><h3>${h.name}</h3></div>
-          <span class="status-badge">Yahoo</span>
-        </div>
-        <div class="price">${money(h.price, h.currency)}</div>
-        <div class="currency">最新現價 · ${h.currency}</div>
-        <div class="card-stats">
-          <div class="stat"><span>入場成本</span><b>${money(h.cost, h.currency)}</b></div>
-          <div class="stat"><span>持有數量</span><b>${number(h.qty)} 股</b></div>
-          <div class="stat"><span>每股價差</span><b>${diff >= 0 ? "+" : ""}${number(diff)}</b></div>
-        </div>
-        <div class="pnl ${isLoss ? "loss" : "profit"}">${isLoss ? "賠" : "賺"} ${money(Math.abs(h.pnlOriginal), h.currency)}<br><small>約 ${signedTwd(h.pnlTwd)}</small></div>
-      </article>`;
-    }).join("");
+  const totalPercent = totalCost
+    ? totalPnl / totalCost * 100
+    : 0;
 
-    const tickerHtml = data.map(h => `<span class="${h.pnlTwd < 0 ? "down" : "up"}">${h.ticker} ${money(h.price, h.currency)} · ${signedTwd(h.pnlTwd)}</span>`).join("");
-    $("#ticker").innerHTML = tickerHtml + tickerHtml;
+  const totalPnlElement =
+    document.querySelector("#totalPnl");
 
-    document.querySelectorAll(".stock-card").forEach(card => {
-      card.addEventListener("click", () => cardEvent(card));
-    });
+  const totalPnlPercentElement =
+    document.querySelector("#totalPnlPct");
+
+  const totalCostElement =
+    document.querySelector("#totalCost");
+
+  const usdTwdElement =
+    document.querySelector("#usdTwd");
+
+  if (totalPnlElement) {
+    totalPnlElement.textContent =
+      signed(totalPnl);
   }
 
+  if (totalPnlPercentElement) {
+    totalPnlPercentElement.textContent =
+      `${totalPercent >= 0 ? "+" : ""}` +
+      `${totalPercent.toFixed(2)}%`;
+  }
+
+  if (totalCostElement) {
+    totalCostElement.textContent =
+      money(totalCost, "TWD");
+  }
+
+  if (usdTwdElement) {
+    usdTwdElement.textContent =
+      Number(state.usdTwd).toFixed(3);
+  }
+
+  const totalCard =
+    document.querySelector(".summary-card.total");
+
+  if (totalCard) {
+    totalCard.classList.toggle(
+      "loss",
+      totalPnl < 0
+    );
+
+    totalCard.classList.toggle(
+      "profit",
+      totalPnl >= 0
+    );
+  }
+
+  const taiwanHoldings = data.filter(
+    holding =>
+      holding.currency === "TWD" ||
+      holding.market === "TW"
+  );
+
+  const usHoldings = data.filter(
+    holding =>
+      holding.currency === "USD" ||
+      holding.market === "US"
+  );
+
+  const twPortfolio =
+    document.querySelector("#twPortfolio");
+
+  const usPortfolio =
+    document.querySelector("#usPortfolio");
+
+  if (twPortfolio) {
+    twPortfolio.innerHTML =
+      taiwanHoldings
+        .map(createStockCard)
+        .join("");
+  }
+
+  if (usPortfolio) {
+    usPortfolio.innerHTML =
+      usHoldings
+        .map(createStockCard)
+        .join("");
+  }
+
+  const tickerHtml = data
+    .map(holding => {
+      const className =
+        holding.pnlTwd < 0
+          ? "down"
+          : "up";
+
+      return `
+        <span class="${className}">
+          ${holding.ticker}
+          ${money(
+            holding.price,
+            holding.currency
+          )}
+          ·
+          ${signed(holding.pnlTwd)}
+        </span>
+      `;
+    })
+    .join("");
+
+  const ticker =
+    document.querySelector("#ticker");
+
+  if (ticker) {
+    ticker.innerHTML =
+      tickerHtml + tickerHtml;
+  }
+
+  renderRanking(data);
+
+  document
+    .querySelectorAll(".stock-card")
+    .forEach(card => {
+      card.addEventListener(
+        "click",
+        () => cardEvent(card)
+      );
+    });
+
+  if (typeof renderCharts === "function") {
+    renderCharts(data);
+  }
+}
+function createStockCard(holding) {
+  const isLoss = holding.pnlTwd < 0;
+
+  const priceDifference =
+    holding.price - holding.cost;
+
+  const statusText =
+    holding.market === "MANUAL"
+      ? "手動估值"
+      : "Yahoo API";
+
+  const fixedSoundText =
+    holding.id === "mrvl"
+      ? `<div class="fixed-sound-note">
+           點擊固定播放 MRVL 專屬音效
+         </div>`
+      : "";
+
+  return `
+    <article
+      class="stock-card"
+      data-id="${holding.id}"
+      style="--glow:${
+        isLoss
+          ? "var(--red)"
+          : "var(--green)"
+      }"
+    >
+      <div class="card-top">
+        <div>
+          <div class="ticker-code">
+            ${holding.ticker}
+          </div>
+
+          <h3>${holding.name}</h3>
+        </div>
+
+        <span class="status-badge">
+          ${statusText}
+        </span>
+      </div>
+
+      <div class="price">
+        ${money(
+          holding.price,
+          holding.currency
+        )}
+      </div>
+
+      <div class="currency">
+        最新現價 · ${holding.currency}
+      </div>
+
+      <div class="card-stats">
+        <div class="stat">
+          <span>入場成本</span>
+
+          <b>
+            ${money(
+              holding.cost,
+              holding.currency
+            )}
+          </b>
+        </div>
+
+        <div class="stat">
+          <span>持有數量</span>
+
+          <b>
+            ${num(holding.qty)} 股
+          </b>
+        </div>
+
+        <div class="stat">
+          <span>每股價差</span>
+
+          <b>
+            ${priceDifference >= 0 ? "+" : ""}
+            ${num(priceDifference)}
+          </b>
+        </div>
+      </div>
+
+      <div
+        class="pnl ${
+          isLoss
+            ? "loss"
+            : "profit"
+        }"
+      >
+        ${
+          isLoss
+            ? "賠"
+            : "賺"
+        }
+
+        ${money(
+          Math.abs(holding.pnlOriginal),
+          holding.currency
+        )}
+
+        <br />
+
+        <small>
+          約 ${signed(holding.pnlTwd)}
+        </small>
+      </div>
+
+      ${fixedSoundText}
+
+      <div class="chart-wrap">
+        <canvas
+          id="chart-${holding.id}"
+        ></canvas>
+      </div>
+
+      ${
+        holding.note
+          ? `
+            <div class="manual-note">
+              ${holding.note}
+            </div>
+          `
+          : ""
+      }
+    </article>
+  `;
+}
+  function renderRanking(data) {
+  if (!Array.isArray(data) || data.length === 0) {
+    return;
+  }
+
+  const sorted = [...data].sort(
+    (a, b) => a.pnlTwd - b.pnlTwd
+  );
+
+  const worst = sorted[0];
+  const best = sorted[sorted.length - 1];
+
+  const worstHolding =
+    document.querySelector("#worstHolding");
+
+  const worstPnl =
+    document.querySelector("#worstPnl");
+
+  const bestHolding =
+    document.querySelector("#bestHolding");
+
+  const bestPnl =
+    document.querySelector("#bestPnl");
+
+  if (worstHolding) {
+    worstHolding.textContent =
+      `${worst.name} (${worst.ticker})`;
+  }
+
+  if (worstPnl) {
+    worstPnl.textContent =
+      signed(worst.pnlTwd);
+  }
+
+  if (bestHolding) {
+    bestHolding.textContent =
+      `${best.name} (${best.ticker})`;
+  }
+
+  if (bestPnl) {
+    bestPnl.textContent =
+      signed(best.pnlTwd);
+  }
+}
   async function fetchYahooWorker() {
     const symbols = [...new Set([...C.holdings.map(h => h.apiSymbol), "USDTWD=X"])];
     const url = `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`;
@@ -207,16 +472,78 @@
   }
 
   function cardEvent(card) {
-    card.classList.remove("hit");
-    void card.offsetWidth;
-    card.classList.add("hit");
-    const rect = card.getBoundingClientRect();
-    burst(rect.left + rect.width / 2, rect.top + rect.height / 2, 12);
-    playRandomMp3();
-    const holding = holdingData(C.holdings.find(x => x.id === card.dataset.id));
-    toast(holding.pnlTwd < 0 ? `${holding.name} 目前虧損 ${money(Math.abs(holding.pnlTwd), "TWD")}` : `${holding.name} 目前獲利 ${money(holding.pnlTwd, "TWD")}`);
+  if (!card) {
+    return;
   }
 
+  card.classList.remove("hit");
+
+  void card.offsetWidth;
+
+  card.classList.add("hit");
+
+  const rect =
+    card.getBoundingClientRect();
+
+  burst(
+    rect.left + rect.width / 2,
+    rect.top + rect.height / 2,
+    12
+  );
+
+  const holding =
+    C.holdings.find(
+      item => item.id === card.dataset.id
+    );
+
+  if (!holding) {
+    return;
+  }
+
+  // MRVL 固定播放專屬音效
+  if (holding.id === "mrvl") {
+    playFixedMp3(
+      "assets/sounds/mrvl.mp3"
+    );
+  } else {
+    playRandomMp3();
+  }
+
+  const holdingResult =
+    holdingData(holding);
+
+  if (holdingResult.pnlTwd < 0) {
+    toast(
+      `${holdingResult.name} 又被套住了 ` +
+      `${money(
+        Math.abs(holdingResult.pnlTwd),
+        "TWD"
+      )}`
+    );
+  } else {
+    toast(
+      `${holdingResult.name} 正在賺錢！`
+    );
+  }
+}
+function playFixedMp3(src) {
+  if (!state.sound) {
+    return;
+  }
+
+  const audio = new Audio(src);
+
+  audio.volume = 0.8;
+
+  audio.play().catch(error => {
+    console.warn(
+      `固定音效播放失敗：${src}`,
+      error
+    );
+
+    playTone("chaos");
+  });
+}
   function chaos() {
     document.body.classList.add("screen-flash");
     setTimeout(() => document.body.classList.remove("screen-flash"), 450);
