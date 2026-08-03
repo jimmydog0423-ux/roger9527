@@ -5,13 +5,33 @@
   if (!C) throw new Error("找不到 APP_CONFIG，請確認 config.js 已正確載入。");
 
   const state = {
-    prices: Object.fromEntries(C.holdings.map(h => [h.id, h.fallbackPrice])),
-    histories: Object.fromEntries(C.holdings.map(h => [h.id, []])),
+    prices: Object.fromEntries(
+      C.holdings.map(h => [
+        h.id,
+        h.fallbackPrice
+      ])
+    ),
+  
+    histories: Object.fromEntries(
+      C.holdings.map(h => [
+        h.id,
+        []
+      ])
+    ),
+  
     charts: {},
+  
+    totalChart: null,
+  
+    fxHistory: [],
+  
     usdTwd: C.fallbackUsdTwd,
     sound: true,
     countdown: C.refreshSeconds,
-    autoRefresh: localStorage.getItem("autoRefresh") !== "false",
+  
+    autoRefresh:
+      localStorage.getItem("autoRefresh") !== "false",
+  
     refreshing: false,
     lastSuccessAt: null
   };
@@ -178,6 +198,7 @@
 
   if (typeof renderCharts === "function") {
     renderCharts(data);
+    renderTotalPortfolioChart(data);
   }
 }
 function createStockCard(holding) {
@@ -410,7 +431,506 @@ function createStockCard(holding) {
       });
     }
   }
+  function renderTotalPortfolioChart(holdings) {
+  if (typeof Chart === "undefined") {
+    console.warn("Chart.js 尚未載入");
+    return;
+  }
 
+  const canvas =
+    document.querySelector(
+      "#totalPortfolioChart"
+    );
+
+  if (!canvas) {
+    return;
+  }
+
+  const timeline =
+    buildPortfolioTimeline(holdings);
+
+  if (state.totalChart) {
+    state.totalChart.destroy();
+    state.totalChart = null;
+  }
+
+  if (timeline.length === 0) {
+    const context =
+      canvas.getContext("2d");
+
+    context.clearRect(
+      0,
+      0,
+      canvas.width,
+      canvas.height
+    );
+
+    context.font =
+      "15px Noto Sans TC";
+
+    context.textAlign =
+      "center";
+
+    context.fillStyle =
+      "rgba(255,255,255,.5)";
+
+    context.fillText(
+      "目前沒有足夠的總資產走勢資料",
+      canvas.width / 2,
+      100
+    );
+
+    return;
+  }
+
+  const labels =
+    timeline.map(item =>
+      formatChartDate(item.time)
+    );
+
+  const values =
+    timeline.map(item =>
+      item.totalValueTwd
+    );
+
+  const firstValue =
+    values[0];
+
+  const lastValue =
+    values[values.length - 1];
+
+  const isUp =
+    lastValue >= firstValue;
+
+  const currentValueElement =
+    document.querySelector(
+      "#currentPortfolioValue"
+    );
+
+  if (currentValueElement) {
+    currentValueElement.textContent =
+      money(lastValue, "TWD");
+  }
+
+  const startDateElement =
+    document.querySelector(
+      "#totalChartStartDate"
+    );
+
+  const endDateElement =
+    document.querySelector(
+      "#totalChartEndDate"
+    );
+
+  if (startDateElement) {
+    startDateElement.textContent =
+      formatFullDate(
+        timeline[0].time
+      );
+  }
+
+  if (endDateElement) {
+    endDateElement.textContent =
+      formatFullDate(
+        timeline[timeline.length - 1].time
+      );
+  }
+
+  const context =
+    canvas.getContext("2d");
+
+  const gradient =
+    context.createLinearGradient(
+      0,
+      0,
+      0,
+      300
+    );
+
+  if (isUp) {
+    gradient.addColorStop(
+      0,
+      "rgba(56,242,154,.32)"
+    );
+
+    gradient.addColorStop(
+      1,
+      "rgba(56,242,154,0)"
+    );
+  } else {
+    gradient.addColorStop(
+      0,
+      "rgba(255,56,92,.32)"
+    );
+
+    gradient.addColorStop(
+      1,
+      "rgba(255,56,92,0)"
+    );
+  }
+
+  state.totalChart =
+    new Chart(canvas, {
+      type: "line",
+
+      data: {
+        labels,
+
+        datasets: [
+          {
+            label: "全資產總市值",
+            data: values,
+
+            borderColor:
+              isUp
+                ? "#38f29a"
+                : "#ff385c",
+
+            backgroundColor:
+              gradient,
+
+            fill: true,
+            borderWidth: 3,
+            pointRadius: 0,
+            pointHoverRadius: 6,
+            pointHitRadius: 12,
+            tension: 0.25
+          }
+        ]
+      },
+
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+
+        animation: {
+          duration: 650
+        },
+
+        interaction: {
+          mode: "index",
+          intersect: false
+        },
+
+        plugins: {
+          legend: {
+            display: false
+          },
+
+          tooltip: {
+            displayColors: false,
+
+            callbacks: {
+              title(items) {
+                const index =
+                  items[0].dataIndex;
+
+                return formatFullDateTime(
+                  timeline[index].time
+                );
+              },
+
+              label(context) {
+                return (
+                  "總市值：" +
+                  money(
+                    context.parsed.y,
+                    "TWD"
+                  )
+                );
+              },
+
+              afterLabel(context) {
+                if (
+                  context.dataIndex === 0
+                ) {
+                  return "";
+                }
+
+                const current =
+                  values[
+                    context.dataIndex
+                  ];
+
+                const previous =
+                  values[
+                    context.dataIndex - 1
+                  ];
+
+                const difference =
+                  current - previous;
+
+                return (
+                  "較前一筆：" +
+                  signed(difference)
+                );
+              }
+            }
+          }
+        },
+
+        scales: {
+          x: {
+            grid: {
+              display: false
+            },
+
+            ticks: {
+              color:
+                "rgba(255,255,255,.55)",
+
+              maxTicksLimit: 8,
+
+              maxRotation: 0,
+              autoSkip: true
+            }
+          },
+
+          y: {
+            position: "right",
+
+            grid: {
+              color:
+                "rgba(255,255,255,.07)"
+            },
+
+            ticks: {
+              color:
+                "rgba(255,255,255,.55)",
+
+              callback(value) {
+                return formatCompactTwd(
+                  value
+                );
+              }
+            }
+          }
+        }
+      }
+    });
+}
+  function buildPortfolioTimeline(holdings) {
+  const allTimes =
+    new Set();
+
+  for (const holding of holdings) {
+    const history =
+      state.histories[holding.id] || [];
+
+    for (const item of history) {
+      if (
+        Number.isFinite(
+          Number(item.time)
+        )
+      ) {
+        allTimes.add(
+          Number(item.time)
+        );
+      }
+    }
+  }
+
+  const times =
+    [...allTimes]
+      .sort((a, b) => a - b);
+
+  if (times.length === 0) {
+    return [];
+  }
+
+  const preparedHistories = {};
+
+  for (const holding of holdings) {
+    preparedHistories[holding.id] =
+      [...(
+        state.histories[
+          holding.id
+        ] || []
+      )]
+        .filter(item =>
+          Number.isFinite(
+            Number(item.time)
+          ) &&
+          Number.isFinite(
+            Number(item.price)
+          )
+        )
+        .map(item => ({
+          time: Number(item.time),
+          price: Number(item.price)
+        }))
+        .sort(
+          (a, b) =>
+            a.time - b.time
+        );
+  }
+
+  return times.map(time => {
+    let totalValueTwd = 0;
+
+    for (const holding of holdings) {
+      const history =
+        preparedHistories[
+          holding.id
+        ];
+
+      const historicalPrice =
+        findLatestPriceAtTime(
+          history,
+          time,
+          holding.price
+        );
+
+      let exchangeRate = 1;
+
+      if (
+        holding.currency === "USD"
+      ) {
+        exchangeRate =
+          findLatestPriceAtTime(
+            state.fxHistory,
+            time,
+            state.usdTwd
+          );
+      }
+
+      totalValueTwd +=
+        historicalPrice *
+        holding.qty *
+        exchangeRate;
+    }
+
+    return {
+      time,
+      totalValueTwd
+    };
+  });
+}
+  function findLatestPriceAtTime(
+  history,
+  timestamp,
+  fallbackPrice
+) {
+  if (
+    !Array.isArray(history) ||
+    history.length === 0
+  ) {
+    return Number(fallbackPrice) || 0;
+  }
+
+  let left = 0;
+  let right =
+    history.length - 1;
+
+  let result =
+    Number(fallbackPrice) || 0;
+
+  while (left <= right) {
+    const middle =
+      Math.floor(
+        (left + right) / 2
+      );
+
+    const item =
+      history[middle];
+
+    if (
+      Number(item.time) <=
+      timestamp
+    ) {
+      result =
+        Number(item.price);
+
+      left =
+        middle + 1;
+    } else {
+      right =
+        middle - 1;
+    }
+  }
+
+  return result;
+}
+  function formatChartDate(timestamp) {
+  return new Date(
+    Number(timestamp) * 1000
+  ).toLocaleString(
+    "zh-TW",
+    {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }
+  );
+}
+
+function formatFullDate(timestamp) {
+  return new Date(
+    Number(timestamp) * 1000
+  ).toLocaleDateString(
+    "zh-TW",
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit"
+    }
+  );
+}
+
+function formatFullDateTime(timestamp) {
+  return new Date(
+    Number(timestamp) * 1000
+  ).toLocaleString(
+    "zh-TW",
+    {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    }
+  );
+}
+
+function formatCompactTwd(value) {
+  const number =
+    Number(value) || 0;
+
+  if (
+    Math.abs(number) >=
+    100000000
+  ) {
+    return (
+      (
+        number /
+        100000000
+      ).toFixed(1) +
+      " 億"
+    );
+  }
+
+  if (
+    Math.abs(number) >=
+    10000
+  ) {
+    return (
+      (
+        number /
+        10000
+      ).toFixed(0) +
+      " 萬"
+    );
+  }
+
+  return Math.round(
+    number
+  ).toLocaleString(
+    "zh-TW"
+  );
+}
   async function fetchYahooWorker() {
     const symbols = [...new Set([...C.holdings.map(h => h.apiSymbol), "USDTWD=X"])];
     const url = `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`;
@@ -421,10 +941,23 @@ function createStockCard(holding) {
     if (!result || !result.data) throw new Error(result?.message || "Worker 未回傳有效資料");
 
     const usdQuote = result.data["USDTWD=X"];
+    
     if (usdQuote?.success && Number.isFinite(Number(usdQuote.price))) {
       state.usdTwd = Number(usdQuote.price);
     }
-
+    if (Array.isArray(usdQuote?.history)) {
+      state.fxHistory =
+        usdQuote.history
+          .filter(item =>
+            Number.isFinite(Number(item.time)) &&
+            Number.isFinite(Number(item.price))
+          )
+          .map(item => ({
+            time: Number(item.time),
+            price: Number(item.price)
+          }))
+          .sort((a, b) => a.time - b.time);
+    }
     let successCount = 0;
     const failed = [];
 
