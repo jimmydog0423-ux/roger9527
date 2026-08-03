@@ -4,3 +4,38 @@
 
 /* Yahoo Worker 完整版補充樣式 */
 .live-row{display:flex;align-items:center;gap:9px;color:var(--cyan);font-weight:900;letter-spacing:.16em;font-size:.78rem;margin-bottom:10px}.live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 16px var(--red);animation:livePulse 1.15s infinite}.rank-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin:0 0 42px}.rank-card{background:linear-gradient(145deg,rgba(255,255,255,.08),rgba(255,255,255,.025));border:1px solid var(--line);border-radius:20px;padding:18px 20px;box-shadow:var(--shadow)}.rank-card span,.rank-card small{display:block;color:var(--muted);font-weight:700}.rank-card strong{display:block;font-size:1.45rem;margin:9px 0 5px}.rank-card:first-child strong,.rank-card:first-child small{color:var(--red)}.rank-card:nth-child(2) strong,.rank-card:nth-child(2) small{color:var(--green)}.status-ok{color:var(--green)!important}.status-error{color:var(--red)!important}.stock-card.is-loss{border-color:rgba(255,56,92,.15)}.stock-card.is-profit{border-color:rgba(56,242,154,.2)}.btn:disabled{opacity:.55;cursor:wait;transform:none!important}.social-link{gap:16px}.social-icon{flex:0 0 45px}@keyframes livePulse{50%{opacity:.35;transform:scale(.72)}}@media(max-width:900px){.rank-grid{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;animation-iteration-count:1!important;scroll-behavior:auto!important}}
+.market-section {
+  margin-top: 48px;
+}
+
+.market-section + .market-section {
+  margin-top: 70px;
+}
+
+.fixed-sound-note {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid rgba(255, 213, 74, 0.25);
+  border-radius: 10px;
+  background: rgba(255, 213, 74, 0.08);
+  color: var(--yellow);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 95px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.chart-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.stock-card {
+  min-height: 400px;
+}
