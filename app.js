@@ -49,44 +49,119 @@ function render(){
   document.querySelectorAll('.stock-card').forEach(card=>card.addEventListener('click',()=>cardEvent(card)));
 }
 
-async function fetchTwelveData(){
-  const apiKey=localStorage.getItem('twelveDataKey');
-  if(!apiKey){ toast('尚未設定 API Key，目前顯示預設價格'); return false; }
-  const apiHoldings=C.holdings.filter(h=>h.apiSymbol);
-  const symbols=[...new Set([...apiHoldings.map(h=>h.apiSymbol),'USD/TWD'])];
-  let success=0;
-  // 分開請求可兼容不同 Twelve Data 帳號方案；失敗時保留上一筆價格。
-  const jobs=symbols.map(async symbol=>{
-    const url=`https://api.twelvedata.com/price?symbol=${encodeURIComponent(symbol)}&apikey=${encodeURIComponent(apiKey)}`;
-    const r=await fetch(url);
-    const j=await r.json();
-    if(!r.ok || j.status==='error' || !j.price) throw new Error(j.message||`無法取得 ${symbol}`);
-    const p=Number(j.price);
-    if(symbol==='USD/TWD') state.usdTwd=p;
-    else {
-      const h=apiHoldings.find(x=>x.apiSymbol===symbol);
-      if(h) state.prices[h.id]=p;
+async function fetchYahooWorker() {
+  const symbols = [
+    ...C.holdings.map(item => item.apiSymbol),
+    "USDTWD=X"
+  ];
+
+  const url =
+    `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}` +
+    `&timestamp=${Date.now()}`;
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      "Accept": "application/json"
     }
-    success++;
   });
-  const results=await Promise.allSettled(jobs);
-  const failed=results.filter(x=>x.status==='rejected');
-  $('#fxSource').textContent=success?'Twelve Data':'預設匯率';
-  if(failed.length) console.warn('部分報價更新失敗',failed);
-  return success>0;
+
+  if (!response.ok) {
+    throw new Error(`Worker 回傳 HTTP ${response.status}`);
+  }
+
+  const result = await response.json();
+
+  if (!result.success || !result.data) {
+    throw new Error(
+      result.message || "Worker 沒有回傳有效資料"
+    );
+  }
+
+  const usdQuote = result.data["USDTWD=X"];
+
+  if (
+    usdQuote &&
+    usdQuote.success &&
+    Number.isFinite(Number(usdQuote.price))
+  ) {
+    state.usdTwd = Number(usdQuote.price);
+  }
+
+  let successCount = 0;
+  const failedSymbols = [];
+
+  for (const holding of C.holdings) {
+    const quote = result.data[holding.apiSymbol];
+
+    if (
+      quote &&
+      quote.success &&
+      Number.isFinite(Number(quote.price))
+    ) {
+      state.prices[holding.id] = Number(quote.price);
+      successCount++;
+    } else {
+      failedSymbols.push(holding.apiSymbol);
+
+      console.warn(
+        `${holding.apiSymbol} 更新失敗：`,
+        quote?.error || "沒有報價"
+      );
+    }
+  }
+
+  document.querySelector("#fxSource").textContent =
+    usdQuote?.success ? "Yahoo Finance" : "預設匯率";
+
+  if (failedSymbols.length > 0) {
+    console.warn(
+      "以下股票報價更新失敗：",
+      failedSymbols.join(", ")
+    );
+  
+  }
+
+  return successCount > 0;
 }
 
-async function refresh(){
-  const btn=$('#refreshBtn'); btn.disabled=true; btn.textContent='更新中…';
-  try{
-    const ok=await fetchTwelveData();
+async function refresh() {
+  const btn = document.querySelector("#refreshBtn");
+
+  btn.disabled = true;
+  btn.textContent = "更新中…";
+
+  try {
+    const ok = await fetchYahooWorker();
+
     render();
-    $('#updatedAt').textContent=new Date().toLocaleTimeString('zh-TW',{hour12:false});
-    state.countdown=C.refreshSeconds;
-    toast(ok?'股價更新完成':'使用預設／上次價格');
-    playTone(ok?'success':'soft');
-  }catch(e){ console.error(e); toast(`更新失敗：${e.message}`); playTone('fail'); }
-  finally{btn.disabled=false;btn.textContent='立即更新'}
+
+    document.querySelector("#updatedAt").textContent =
+      new Date().toLocaleString("zh-TW", {
+        hour12: false
+      });
+
+    state.countdown = C.refreshSeconds;
+
+    toast(
+      ok
+        ? "Yahoo Finance 股價更新完成"
+        : "未取得新報價，顯示上次價格"
+    );
+
+    playTone(ok ? "success" : "soft");
+  } catch (error) {
+    console.error("股價更新失敗：", error);
+
+    render();
+
+    toast(`更新失敗：${error.message}`);
+    playTone("fail");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "立即更新";
+  }
 }
 
 function toast(text){const t=$('#toast');t.textContent=text;t.classList.add('show');clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove('show'),2600)}
@@ -123,4 +198,12 @@ $('#settingsBtn').addEventListener('click',()=>{ $('#apiKeyInput').value=localSt
 $('#saveSettingsBtn').addEventListener('click',()=>{const k=$('#apiKeyInput').value.trim();if(k)localStorage.setItem('twelveDataKey',k);state.autoRefresh=$('#autoRefreshInput').checked;localStorage.setItem('autoRefresh',String(state.autoRefresh));setTimeout(refresh,0)});
 $('#clearKeyBtn').addEventListener('click',()=>{localStorage.removeItem('twelveDataKey');$('#apiKeyInput').value='';toast('API Key 已清除')});
 setInterval(()=>{if(!state.autoRefresh){$('#countdown').textContent='自動更新已關閉';return}state.countdown--;if(state.countdown<=0)refresh();$('#countdown').textContent=`${Math.max(0,state.countdown)} 秒後自動更新`},1000);
-renderSocials();render();$('#autoRefreshInput').checked=state.autoRefresh;setTimeout(()=>{if(localStorage.getItem('twelveDataKey'))refresh()},500);
+renderSocials();
+render();
+
+document.querySelector("#autoRefreshInput").checked =
+  state.autoRefresh;
+
+setTimeout(() => {
+  refresh();
+}, 500);
