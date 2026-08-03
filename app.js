@@ -569,12 +569,14 @@ function createStockCard(holding) {
   // MRVL 固定播放專屬音效
   if (holding.id === "mrvl") {
     playFixedMp3(
+      holding.fixedSound ||
       "assets/sounds/mrvl.mp3"
     );
+  
+    showMrvlEffect();
   } else {
     playRandomMp3();
   }
-
   const holdingResult =
     holdingData(holding);
 
@@ -610,6 +612,117 @@ function playFixedMp3(src) {
     playTone("chaos");
   });
 }
+let mrvlEffectTimer = null;
+
+function showMrvlEffect() {
+  const effect =
+    document.querySelector("#mrvlEffect");
+
+  if (!effect) {
+    console.warn("找不到 #mrvlEffect");
+    return;
+  }
+
+  clearTimeout(mrvlEffectTimer);
+
+  effect.classList.remove("show");
+
+  void effect.offsetWidth;
+
+  effect.classList.add("show");
+
+  effect.setAttribute(
+    "aria-hidden",
+    "false"
+  );
+
+  createMrvlParticles();
+
+  mrvlEffectTimer = setTimeout(() => {
+    hideMrvlEffect();
+  }, 3500);
+}
+
+function hideMrvlEffect() {
+  const effect =
+    document.querySelector("#mrvlEffect");
+
+  if (!effect) return;
+
+  effect.classList.remove("show");
+
+  effect.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+}
+
+function createMrvlParticles() {
+  const symbols = [
+    "MRVL",
+    "爆",
+    "🔥",
+    "💥",
+    "📉",
+    "💸",
+    "GG"
+  ];
+
+  for (
+    let index = 0;
+    index < 45;
+    index++
+  ) {
+    const particle =
+      document.createElement("span");
+
+    particle.className =
+      "mrvl-effect-particle";
+
+    particle.textContent =
+      symbols[
+        Math.floor(
+          Math.random() *
+          symbols.length
+        )
+      ];
+
+    particle.style.left =
+      `${window.innerWidth / 2}px`;
+
+    particle.style.top =
+      `${window.innerHeight / 2}px`;
+
+    particle.style.setProperty(
+      "--particle-x",
+      `${(Math.random() - 0.5) * window.innerWidth}px`
+    );
+
+    particle.style.setProperty(
+      "--particle-y",
+      `${(Math.random() - 0.5) * window.innerHeight}px`
+    );
+
+    particle.style.setProperty(
+      "--particle-rotate",
+      `${(Math.random() - 0.5) * 900}deg`
+    );
+
+    particle.style.color =
+      Math.random() > 0.5
+        ? "#ff385c"
+        : "#ffd54a";
+
+    document.body.appendChild(
+      particle
+    );
+
+    setTimeout(() => {
+      particle.remove();
+    }, 1600);
+  }
+}
+
   function chaos() {
     document.body.classList.add("screen-flash");
     setTimeout(() => document.body.classList.remove("screen-flash"), 450);
@@ -655,7 +768,21 @@ function playFixedMp3(src) {
     if (state.countdown <= 0) refresh();
     $("#countdown").textContent = `${Math.max(0, state.countdown)} 秒後自動更新`;
   }, 1000);
-
+  document
+    .querySelector("#mrvlEffect")
+    ?.addEventListener(
+      "click",
+      hideMrvlEffect
+    );
+  
+  document.addEventListener(
+    "keydown",
+    event => {
+      if (event.key === "Escape") {
+        hideMrvlEffect();
+      }
+    }
+  );
   renderSocials();
   render();
   const autoRefreshBtn = $("#autoRefreshBtn");
