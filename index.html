@@ -114,7 +114,29 @@
         <small id="countdown">60 秒後自動更新</small>
       </article>
     </section>
-
+    <section class="total-chart-section">
+      <div class="total-chart-head">
+        <div>
+          <p class="eyebrow">TOTAL ASSET TREND</p>
+          <h2>全資產總市值走勢</h2>
+        </div>
+    
+        <div class="total-chart-value">
+          <span>目前總市值</span>
+          <strong id="currentPortfolioValue">—</strong>
+        </div>
+      </div>
+    
+      <div class="total-chart-wrap">
+        <canvas id="totalPortfolioChart"></canvas>
+      </div>
+    
+      <div class="total-chart-footer">
+        <span id="totalChartStartDate">—</span>
+        <span>資料以新台幣估算</span>
+        <span id="totalChartEndDate">—</span>
+      </div>
+    </section>
     <section
       class="ticker-wrap"
       aria-label="即時跑馬燈"
