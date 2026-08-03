@@ -39,3 +39,199 @@
 .stock-card {
   min-height: 400px;
 }
+.mrvl-effect {
+  position: fixed;
+  inset: 0;
+  z-index: 999;
+  display: grid;
+  place-items: center;
+  visibility: hidden;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 0.2s ease,
+    visibility 0.2s ease;
+}
+
+.mrvl-effect.show {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mrvl-effect-backdrop {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 56, 92, 0.24),
+      rgba(5, 2, 12, 0.94) 65%
+    );
+  backdrop-filter: blur(8px);
+}
+
+.mrvl-effect-content {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  justify-items: center;
+  width: min(820px, calc(100% - 30px));
+  transform: scale(0.25) rotate(-12deg);
+  opacity: 0;
+}
+
+.mrvl-effect.show .mrvl-effect-content {
+  animation:
+    mrvlAppear 0.7s cubic-bezier(
+      0.17,
+      0.89,
+      0.32,
+      1.35
+    ) forwards,
+    mrvlShake 0.12s linear 6 0.7s;
+}
+
+.mrvl-effect-content img {
+  display: block;
+  max-width: min(650px, 90vw);
+  max-height: 65vh;
+  object-fit: contain;
+  border: 5px solid rgba(255, 255, 255, 0.85);
+  border-radius: 24px;
+  box-shadow:
+    0 0 30px rgba(255, 56, 92, 0.7),
+    0 0 80px rgba(139, 92, 246, 0.55),
+    0 30px 100px rgba(0, 0, 0, 0.8);
+}
+
+.mrvl-effect-title {
+  margin-top: 18px;
+  color: #fff;
+  font-size: clamp(2rem, 7vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow:
+    0 0 12px #ff385c,
+    0 0 25px #ff385c,
+    0 0 55px #8b5cf6;
+  animation: mrvlTitlePulse 0.55s ease-in-out infinite alternate;
+}
+
+.mrvl-effect-subtitle {
+  margin-top: 5px;
+  color: #ffd54a;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 900;
+  letter-spacing: 0.12em;
+}
+
+.mrvl-effect-flash {
+  position: fixed;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.mrvl-effect.show .mrvl-effect-flash {
+  animation: mrvlFlash 0.65s ease-out;
+}
+
+.mrvl-effect-particle {
+  position: fixed;
+  z-index: 1001;
+  pointer-events: none;
+  font-size: clamp(1.2rem, 3vw, 2.5rem);
+  font-weight: 900;
+  animation: mrvlParticle 1.5s ease-out forwards;
+}
+
+@keyframes mrvlAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.25) rotate(-12deg);
+  }
+
+  55% {
+    opacity: 1;
+    transform: scale(1.15) rotate(3deg);
+  }
+
+  75% {
+    transform: scale(0.94) rotate(-1deg);
+  }
+
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes mrvlShake {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+
+  25% {
+    transform: translate(-7px, 4px);
+  }
+
+  50% {
+    transform: translate(7px, -4px);
+  }
+
+  75% {
+    transform: translate(-4px, -2px);
+  }
+}
+
+@keyframes mrvlFlash {
+  0% {
+    opacity: 0.95;
+  }
+
+  25% {
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 0.55;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes mrvlTitlePulse {
+  from {
+    transform: scale(1);
+  }
+
+  to {
+    transform: scale(1.07);
+  }
+}
+
+@keyframes mrvlParticle {
+  0% {
+    opacity: 1;
+    transform:
+      translate(0, 0)
+      scale(0.5)
+      rotate(0);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        var(--particle-x),
+        var(--particle-y)
+      )
+      scale(1.4)
+      rotate(var(--particle-rotate));
+  }
+}
