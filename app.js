@@ -1168,8 +1168,15 @@ function normalizeHistory(history) {
 }
   async function fetchYahooWorker() {
     const symbols = [...new Set([...C.holdings.map(h => h.apiSymbol), "USDTWD=X"])];
-    const url = `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`;
-    const response = await fetch(url, { cache: "no-store", headers: { Accept: "application/json" } });
+    const response = await fetchWithFallback(
+      `/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`,
+      {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json"
+        }
+      }
+    );
 
     if (!response.ok) throw new Error(`Worker 回傳 HTTP ${response.status}`);
     const result = await response.json();
@@ -1637,14 +1644,14 @@ async function loadPrayStats() {
         getPrayVisitorId()
       );
 
-    const response = await fetch(
-      `${PRAY_API_URL}/pray/stats?visitorId=${visitorId}`,
-      {
-        cache: "no-store",
-        headers: {
-          Accept: "application/json"
+    const response = await fetchWithFallback(
+        `/pray/stats?visitorId=${visitorId}`,
+        {
+            cache: "no-store",
+            headers: {
+                Accept: "application/json"
+            }
         }
-      }
     );
 
     const result =
@@ -1674,21 +1681,19 @@ async function loadPrayStats() {
   }
 }
 async function recordPray() {
-  const response = await fetch(
-    `${PRAY_API_URL}/pray`,
+  const response = await fetchWithFallback(
+    "/pray",
     {
-      method: "POST",
-      headers: {
-        "Content-Type":
-          "application/json",
-        Accept: "application/json"
-      },
-      body: JSON.stringify({
-        visitorId:
-          getPrayVisitorId()
-      })
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json"
+        },
+        body: JSON.stringify({
+            visitorId: getPrayVisitorId()
+        })
     }
-  );
+);
 
   const result =
     await response.json();
@@ -2788,6 +2793,33 @@ if (document.readyState === "loading") {
 } else {
   setupRogerRelationshipGraph();
 }
+  async function fetchWithFallback(path, options = {}) {
+    const urls = [C.workerUrl, C.workerUrl2].filter(Boolean);
+  
+    let lastError;
+  
+    for (const baseUrl of urls) {
+      try {
+        const response = await fetch(`${baseUrl}${path}`, options);
+  
+        // 免費方案超過每日額度通常會回 429
+        if (response.status === 429) {
+          throw new Error("Worker quota exceeded");
+        }
+  
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+  
+        return response;
+      } catch (error) {
+        console.warn(`${baseUrl} 失敗，切換下一個 Worker`, error);
+        lastError = error;
+      }
+    }
+  
+    throw lastError || new Error("所有 Worker 都無法使用");
+  }
   renderSocials();
   render();
   
