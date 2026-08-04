@@ -31,6 +31,9 @@
   />
 
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script
+  src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"
+  ></script>
 </head>
 
 <body>
@@ -52,6 +55,13 @@
     </div>
 
     <div class="hero-actions">
+      <button
+        id="aboutRogerBtn"
+        class="btn about-roger-btn"
+        type="button"
+      >
+        關於羅傑
+      </button>
       <button
         id="refreshBtn"
         class="btn primary"
@@ -283,18 +293,246 @@
   </button>
 </div>
 
-<div
-  id="prayAnimationLayer"
-  class="pray-animation-layer"
-  aria-hidden="true"
-></div>
-  
   <!-- 拜拜動畫產生區 -->
   <div
     id="prayAnimationLayer"
     class="pray-animation-layer"
     aria-hidden="true"
 ></div>
+
+  <!-- 關於羅傑視窗 -->
+<div
+  id="aboutRogerModal"
+  class="roger-modal"
+  aria-hidden="true"
+>
+  <div
+    class="roger-modal-backdrop"
+    data-close-roger-modal
+  ></div>
+
+  <section
+    class="roger-modal-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="aboutRogerTitle"
+  >
+    <button
+      id="closeAboutRogerBtn"
+      class="roger-modal-close"
+      type="button"
+      aria-label="關閉視窗"
+    >
+      ×
+    </button>
+
+    <div class="roger-about-layout">
+
+      <div class="roger-photo-area">
+        <img
+          src="assets/images/roger-profile.jpg"
+          alt="羅傑"
+          class="roger-profile-image"
+        />
+
+        <div class="roger-photo-caption">
+          <span>實況主</span>
+          <strong>羅傑 Roger</strong>
+        </div>
+      </div>
+
+      <div class="roger-introduction">
+        <p class="eyebrow">ABOUT ROGER</p>
+
+        <h2 id="aboutRogerTitle">
+          關於羅傑
+        </h2>
+
+        <p>
+          羅傑，本名羅晟原，人稱「2486」、「電競不沾鍋」，是一位以高血壓操作、莫名失聯、以及各種精華聞名的頂級實況主。
+          憑藉著「要拚」的頭鐵風格，以及跟聊天室互相問候祖先的高度互動，成功圈養了一群自稱「好傑寶」，實則每天
+          都在等他開台出醜、爆氣的資深黑粉。
+        </p>
+
+        <p>
+          實況內容極其硬核，表面上涵蓋《爐石戰記》、戰棋速八、各式 3A 大作，
+          但實際上核心主體為：不開台遲到、股市點燈（買哪隻跌哪隻）、以及長達數小時的無意義日常抓交替。
+          其直播間堪稱現代網路迷因的萬惡根源，充斥著恩怨情仇、假帳號到處出征。
+        </p>
+
+        <div class="roger-info-list">
+          <div>
+            <span>名稱</span>
+            <strong>羅傑</strong>
+          </div>
+
+          <div>
+            <span>英文名稱</span>
+            <strong>Roger</strong>
+          </div>
+
+          <div>
+            <span綽號</span>
+            <strong>2486、高金生、V老大的狗、說教男</strong>
+          </div>
+
+          <div>
+            <span>特色</span>
+            <strong>要拚、貪刀、不開台</strong>
+          </div>
+        </div>
+
+        <button
+          id="openRelationshipBtn"
+          class="roger-relationship-btn"
+          type="button"
+        >
+          查看完整人際關係圖
+        </button>
+      </div>
+
+    </div>
+  </section>
+</div>
+
+<!-- 羅傑人際關係圖視窗 -->
+<div
+  id="relationshipModal"
+  class="roger-modal relationship-modal"
+  aria-hidden="true"
+>
+  <div
+    class="roger-modal-backdrop"
+    data-close-relationship-modal
+  ></div>
+
+  <section
+    class="roger-modal-panel relationship-panel"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="relationshipTitle"
+  >
+    <button
+      id="closeRelationshipBtn"
+      class="roger-modal-close"
+      type="button"
+      aria-label="關閉人際關係圖"
+    >
+      ×
+    </button>
+
+    <div class="relationship-header">
+      <div>
+        <p class="eyebrow">RELATIONSHIP MAP</p>
+        <h2 id="relationshipTitle">
+          羅傑完整人際關係圖
+        </h2>
+      </div>
+
+      <button
+        id="backToAboutBtn"
+        class="btn ghost"
+        type="button"
+      >
+        返回人物介紹
+      </button>
+    </div>
+
+    <div class="relationship-toolbar">
+  <div class="relationship-filters">
+    <button
+      class="relationship-filter active"
+      type="button"
+      data-relationship-group="all"
+    >
+      全部人物
+    </button>
+
+    <button
+      class="relationship-filter"
+      type="button"
+      data-relationship-group="xd"
+    >
+      XD娛樂
+    </button>
+
+    <button
+      class="relationship-filter"
+      type="button"
+      data-relationship-group="hearthstone"
+    >
+      爐石實況圈
+    </button>
+
+    <button
+      class="relationship-filter"
+      type="button"
+      data-relationship-group="streamer"
+    >
+      實況圈
+    </button>
+  </div>
+
+  <button
+    id="resetRelationshipGraphBtn"
+    class="btn ghost relationship-reset-btn"
+    type="button"
+  >
+    重設位置
+  </button>
+</div>
+
+<div class="relationship-graph-layout">
+
+  <div class="relationship-network-column">
+    <div
+      id="rogerRelationshipNetwork"
+      class="relationship-network"
+      aria-label="羅傑互動人際關係圖"
+    ></div>
+  </div>
+
+  <aside
+    id="relationshipDetail"
+    class="relationship-detail"
+  >
+    <div
+      id="relationshipDetailAvatar"
+      class="relationship-detail-avatar group-center"
+    >
+      <img
+        id="relationshipDetailAvatarImage"
+        src="assets/images/people/roger.jpg"
+        alt="羅傑"
+      />
+    </div>
+
+    <p
+      id="relationshipDetailGroup"
+      class="relationship-detail-group"
+    >
+      中心人物
+    </p>
+
+    <h3 id="relationshipDetailName">
+      羅傑
+    </h3>
+
+    <div class="relationship-detail-relation">
+      <span>與羅傑的關係</span>
+      <strong id="relationshipDetailRelation">
+        中心
+      </strong>
+    </div>
+
+    <p id="relationshipDetailDescription">
+      共同創辦人、核心藝人，也是整張人際關係圖的中心節點。
+    </p>
+  </aside>
+
+</div>
+  </section>
+</div>
   <div
     id="toast"
     class="toast"
