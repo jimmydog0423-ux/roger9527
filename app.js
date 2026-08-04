@@ -2361,7 +2361,7 @@ if (document.readyState === "loading") {
     id: "overload",
     name: "超負荷",
     shortName: "超負荷",
-    image: "assets/images/people/超負荷.jng",
+    image: "assets/images/people/超負荷.jpg",
     group: "streamer",
     relation: "正代餐",
     description: "早期紅色學校同僚，實況效果上經常相愛相殺，也是長期的玩梗對象。",
