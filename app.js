@@ -1563,8 +1563,240 @@ function createMrvlParticles() {
       }
     }
   );
+
+  /* =========================
+   燒香拜拜動畫
+========================= */
+
+const PRAY_IMAGES = [
+  "assets/images/pray-1.jpg",
+  "assets/images/pray-2.jpg"
+];
+
+const PRAY_MESSAGE =
+  "祝羅傑早日離開這充滿惡意的世界";
+
+let prayAnimationIndex = 0;
+
+function getRandomPrayImage() {
+  const randomIndex = Math.floor(
+    Math.random() * PRAY_IMAGES.length
+  );
+
+  return PRAY_IMAGES[randomIndex];
+}
+
+function createPraySparkles(button) {
+  const layer = document.querySelector(
+    "#prayAnimationLayer"
+  );
+
+  if (!layer || !button) {
+    return;
+  }
+
+  const buttonRect =
+    button.getBoundingClientRect();
+
+  const startX =
+    buttonRect.left + buttonRect.width / 2;
+
+  const startY =
+    buttonRect.top + buttonRect.height / 2;
+
+  for (let index = 0; index < 18; index++) {
+    const spark =
+      document.createElement("span");
+
+    spark.className = "pray-spark";
+
+    spark.style.left = `${startX}px`;
+    spark.style.top = `${startY}px`;
+
+    spark.style.setProperty(
+      "--spark-x",
+      `${(Math.random() - 0.5) * 420}px`
+    );
+
+    spark.style.setProperty(
+      "--spark-y",
+      `${-100 - Math.random() * 360}px`
+    );
+
+    layer.appendChild(spark);
+
+    spark.addEventListener(
+      "animationend",
+      () => {
+        spark.remove();
+      },
+      {
+        once: true
+      }
+    );
+  }
+}
+
+function createPrayFloatAnimation() {
+  const button = document.querySelector(
+    "#prayFloatingBtn"
+  );
+
+  const layer = document.querySelector(
+    "#prayAnimationLayer"
+  );
+
+  if (!button || !layer) {
+    console.warn(
+      "找不到拜拜按鈕或動畫圖層"
+    );
+
+    return;
+  }
+
+  const buttonRect =
+    button.getBoundingClientRect();
+
+  const startX =
+    buttonRect.left + buttonRect.width / 2;
+
+  const startY =
+    buttonRect.top + buttonRect.height / 2;
+
+  const item =
+    document.createElement("div");
+
+  item.className = "pray-float-item";
+
+  /*
+   * 每次稍微改變終點位置，
+   * 連續按下時不會完全重疊。
+   */
+  const horizontalOffset =
+    (Math.random() - 0.5) * 260;
+
+  const verticalOffset =
+    Math.random() * 90;
+
+  const endX =
+    window.innerWidth / 2 + horizontalOffset;
+
+  const endY =
+    window.innerHeight * 0.37 - verticalOffset;
+
+  const rotate =
+    (Math.random() - 0.5) * 10;
+
+  item.style.setProperty(
+    "--pray-start-x",
+    `${startX}px`
+  );
+
+  item.style.setProperty(
+    "--pray-start-y",
+    `${startY}px`
+  );
+
+  item.style.setProperty(
+    "--pray-end-x",
+    `${endX}px`
+  );
+
+  item.style.setProperty(
+    "--pray-end-y",
+    `${endY}px`
+  );
+
+  item.style.setProperty(
+    "--pray-rotate",
+    `${rotate}deg`
+  );
+
+  const image =
+    document.createElement("img");
+
+  image.className = "pray-float-image";
+  image.src = getRandomPrayImage();
+  image.alt = "拜拜祈福圖片";
+
+  /*
+   * 避免瀏覽器保留破圖。
+   */
+  image.addEventListener(
+    "error",
+    () => {
+      console.error(
+        `圖片載入失敗：${image.src}`
+      );
+
+      item.remove();
+    },
+    {
+      once: true
+    }
+  );
+
+  const message =
+    document.createElement("div");
+
+  message.className = "pray-float-text";
+  message.textContent = PRAY_MESSAGE;
+
+  item.appendChild(image);
+  item.appendChild(message);
+
+  layer.appendChild(item);
+
+  item.addEventListener(
+    "animationend",
+    () => {
+      item.remove();
+    },
+    {
+      once: true
+    }
+  );
+
+  createPraySparkles(button);
+
+  /*
+   * 讓按鈕重新觸發震動。
+   */
+  button.classList.remove("is-praying");
+
+  void button.offsetWidth;
+
+  button.classList.add("is-praying");
+
+  window.setTimeout(() => {
+    button.classList.remove("is-praying");
+  }, 600);
+
+  prayAnimationIndex++;
+}
+
+function setupPrayAnimation() {
+  const button = document.querySelector(
+    "#prayFloatingBtn"
+  );
+
+  if (!button) {
+    console.warn(
+      "找不到 #prayFloatingBtn"
+    );
+
+    return;
+  }
+
+  button.addEventListener(
+    "click",
+    createPrayFloatAnimation
+  );
+}
+
   renderSocials();
   render();
+  setupPrayAnimation();
   const autoRefreshBtn = $("#autoRefreshBtn");
   if (autoRefreshBtn) {
     autoRefreshBtn.textContent = `自動更新：${state.autoRefresh ? "開" : "關"}`;
