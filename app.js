@@ -2371,51 +2371,62 @@ if (document.readyState === "loading") {
     "最強後盾": "#ffd85c",
     "正代餐": "#ff715c"
   };
+  const DEFAULT_PERSON_IMAGE =
+  "assets/images/people/default.jpg";
 
-  const nodes = new vis.DataSet(
-    people.map((person) => {
-      const isRoger = person.id === "roger";
+const nodes = new vis.DataSet(
+  people.map((person) => {
+    const isRoger = person.id === "roger";
 
-      return {
-        id: person.id,
-        label: person.shortName,
-        group: person.group,
-        shape: "circularImage",
-        brokenImage: "assets/images/people/default.jpg",
-        x: person.x,
-        y: person.y,
-        fixed: isRoger
-          ? {
-              x: true,
-              y: true
-            }
-          : false,
-        size: isRoger ? 48 : 30,
-        font: {
-          color: "#ffffff",
-          size: isRoger ? 21 : 16,
-          face: "Noto Sans TC",
-          bold: {
-            color: "#ffffff",
-            size: isRoger ? 21 : 16,
-            face: "Noto Sans TC",
-            mod: "bold"
-          },
-          strokeWidth: 5,
-          strokeColor: "rgba(5, 3, 15, 0.85)"
-        },
-        borderWidth: isRoger ? 5 : 3,
-        borderWidthSelected: 6,
-        shadow: {
-          enabled: true,
-          color: "rgba(0, 0, 0, 0.52)",
-          size: isRoger ? 24 : 15,
-          x: 0,
-          y: 7
-        }
-      };
-    })
-  );
+    const personImage =
+      typeof person.image === "string" &&
+      person.image.trim() !== ""
+        ? person.image
+        : DEFAULT_PERSON_IMAGE;
+
+    return {
+      id: person.id,
+      label: person.shortName,
+      group: person.group,
+
+      shape: "circularImage",
+      image: personImage,
+      brokenImage: DEFAULT_PERSON_IMAGE,
+
+      x: person.x,
+      y: person.y,
+
+      fixed: isRoger
+        ? {
+            x: true,
+            y: true
+          }
+        : false,
+
+      size: isRoger ? 55 : 38,
+
+      font: {
+        color: "#ffffff",
+        size: isRoger ? 21 : 16,
+        face: "Noto Sans TC",
+        vadjust: 8,
+        strokeWidth: 5,
+        strokeColor: "rgba(5, 3, 15, 0.9)"
+      },
+
+      borderWidth: isRoger ? 6 : 4,
+      borderWidthSelected: 7,
+
+      shadow: {
+        enabled: true,
+        color: "rgba(0, 0, 0, 0.6)",
+        size: isRoger ? 26 : 17,
+        x: 0,
+        y: 8
+      }
+    };
+  })
+);
 
   const edges = new vis.DataSet(
     people
@@ -2462,15 +2473,8 @@ if (document.readyState === "loading") {
     autoResize: true,
 
     nodes: {
-      shape: "circularImage",
       chosen: true,
-    
-      imagePadding: {
-        left: 3,
-        top: 3,
-        right: 3,
-        bottom: 3
-      }
+      imagePadding: 3
     },
 
     groups: {
