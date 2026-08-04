@@ -248,18 +248,46 @@
   </div>
 </div>
   <!-- 燒香拜拜按鈕 -->
+  <div class="pray-fixed-area">
   <button
     id="prayFloatingBtn"
-    class="pray-floating-btn"
+    class="pray-fixed-button"
     type="button"
-    aria-label="燒香拜拜"
-    title="燒香拜拜"
+    aria-label="上香祈福"
   >
-    <img
-      src="assets/images/incense.png"
-      alt="燒香拜拜"
-    />
+    <span class="pray-icon-box">
+      <img
+        src="assets/images/incense.png"
+        alt=""
+      />
+    </span>
+
+    <span class="pray-info">
+      <span class="pray-title">
+        點我上香
+      </span>
+
+      <span class="pray-visitor-row">
+        已有
+        <strong id="prayVisitorCount">0</strong>
+        人上香
+      </span>
+
+      <span
+        id="prayTotalCount"
+        class="pray-total-count"
+      >
+        累積香火 0 次
+      </span>
+    </span>
   </button>
+</div>
+
+<div
+  id="prayAnimationLayer"
+  class="pray-animation-layer"
+  aria-hidden="true"
+></div>
   
   <!-- 拜拜動畫產生區 -->
   <div
