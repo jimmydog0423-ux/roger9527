@@ -2084,7 +2084,8 @@ if (document.readyState === "loading") {
 
   const detailAvatar =
     document.getElementById("relationshipDetailAvatar");
-
+  const detailAvatarImage =
+    document.getElementById("relationshipDetailAvatarImage");
   const detailGroup =
     document.getElementById("relationshipDetailGroup");
 
