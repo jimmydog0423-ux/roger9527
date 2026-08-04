@@ -1568,7 +1568,145 @@ function createMrvlParticles() {
   /* =========================
    燒香拜拜動畫
 ========================= */
+function updatePrayStatsDisplay(stats) {
+  const visitorCountElement =
+    document.querySelector(
+      "#prayVisitorCount"
+    );
 
+  const totalCountElement =
+    document.querySelector(
+      "#prayTotalCount"
+    );
+
+  if (visitorCountElement) {
+    visitorCountElement.textContent =
+      Number(
+        stats?.totalVisitors || 0
+      ).toLocaleString("zh-TW");
+  }
+
+  if (totalCountElement) {
+    totalCountElement.textContent =
+      `累積香火 ${Number(
+        stats?.totalCount || 0
+      ).toLocaleString("zh-TW")} 次`;
+  }
+}
+  function getPrayVisitorId() {
+  const storageKey =
+    "rogerPrayVisitorId";
+
+  let visitorId =
+    localStorage.getItem(storageKey);
+
+  if (!visitorId) {
+    if (
+      typeof crypto !== "undefined" &&
+      typeof crypto.randomUUID === "function"
+    ) {
+      visitorId =
+        crypto
+          .randomUUID()
+          .replaceAll("-", "_");
+    } else {
+      visitorId =
+        `visitor_${Date.now()}_` +
+        Math.random()
+          .toString(36)
+          .slice(2);
+    }
+
+    localStorage.setItem(
+      storageKey,
+      visitorId
+    );
+  }
+
+  return visitorId;
+}
+async function loadPrayStats() {
+  const visitorCountElement =
+    document.querySelector(
+      "#prayVisitorCount"
+    );
+
+  try {
+    const visitorId =
+      encodeURIComponent(
+        getPrayVisitorId()
+      );
+
+    const response = await fetch(
+      `${PRAY_API_URL}/pray/stats?visitorId=${visitorId}`,
+      {
+        cache: "no-store",
+        headers: {
+          Accept: "application/json"
+        }
+      }
+    );
+
+    const result =
+      await response.json();
+
+    if (
+      !response.ok ||
+      !result?.success
+    ) {
+      throw new Error(
+        result?.message ||
+        "無法取得上香統計"
+      );
+    }
+
+    updatePrayStatsDisplay(result);
+  } catch (error) {
+    console.error(
+      "取得上香統計失敗：",
+      error
+    );
+
+    if (visitorCountElement) {
+      visitorCountElement.textContent =
+        "--";
+    }
+  }
+}
+async function recordPray() {
+  const response = await fetch(
+    `${PRAY_API_URL}/pray`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type":
+          "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        visitorId:
+          getPrayVisitorId()
+      })
+    }
+  );
+
+  const result =
+    await response.json();
+
+  if (
+    !response.ok ||
+    !result?.success
+  ) {
+    throw new Error(
+      result?.message ||
+      "上香紀錄失敗"
+    );
+  }
+
+  updatePrayStatsDisplay(result);
+
+  return result;
+}
 const PRAY_IMAGES = [
   "assets/images/pray-1.jpg",
   "assets/images/pray-2.jpg"
@@ -1638,7 +1776,7 @@ function createPraySparkles(button) {
   }
 }
 
-function createPrayFloatAnimation() {
+async function createPrayFloatAnimation() {
   const button = document.querySelector(
     "#prayFloatingBtn"
   );
@@ -1759,7 +1897,16 @@ function createPrayFloatAnimation() {
   );
 
   createPraySparkles(button);
-
+  try {
+    await recordPray();
+  } catch (error) {
+    console.error(
+      "上香統計失敗：",
+      error
+    );
+  
+    toast("上香成功，但人數紀錄失敗");
+  }
   /*
    * 讓按鈕重新觸發震動。
    */
@@ -1797,8 +1944,12 @@ function setupPrayAnimation() {
 
   renderSocials();
   render();
+  
   setupPrayAnimation();
-  const autoRefreshBtn = $("#autoRefreshBtn");
+  loadPrayStats();
+  
+  const autoRefreshBtn =
+    $("#autoRefreshBtn");
   if (autoRefreshBtn) {
     autoRefreshBtn.textContent = `自動更新：${state.autoRefresh ? "開" : "關"}`;
     autoRefreshBtn.setAttribute("aria-pressed", String(state.autoRefresh));
