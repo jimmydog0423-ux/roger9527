@@ -2126,6 +2126,7 @@ if (document.readyState === "loading") {
       id: "roger",
       name: "羅傑",
       shortName: "羅傑",
+      image: "assets/images/people/roger.jpg",
       group: "center",
       relation: "中心",
       description:
