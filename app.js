@@ -506,15 +506,41 @@ function createStockCard(holding) {
   const isUp =
     lastValue >= firstValue;
 
-  const currentValueElement =
-    document.querySelector(
-      "#currentPortfolioValue"
-    );
+ const currentPortfolioValue =
+  holdings.reduce(
+    (total, holding) => {
+      const price =
+        isValidNumber(holding.price)
+          ? Number(holding.price)
+          : 0;
 
-  if (currentValueElement) {
-    currentValueElement.textContent =
-      money(lastValue, "TWD");
-  }
+      const quantity =
+        Number(holding.qty) || 0;
+
+      const exchangeRate =
+        holding.currency === "USD"
+          ? (
+              isValidNumber(state.usdTwd)
+                ? Number(state.usdTwd)
+                : Number(C.fallbackUsdTwd)
+            )
+          : 1;
+
+      return total +
+        price *
+        quantity *
+        exchangeRate;
+    },
+    0
+  );
+
+if (currentValueElement) {
+  currentValueElement.textContent =
+    money(
+      currentPortfolioValue,
+      "TWD"
+    );
+}
 
   const startDateElement =
     document.querySelector(
@@ -713,128 +739,300 @@ function createStockCard(holding) {
       }
     });
 }
-  function buildPortfolioTimeline(holdings) {
-  const allTimes =
-    new Set();
+ function buildPortfolioTimeline(holdings) {
+  const allTimes = new Set();
+  const preparedHistories = {};
 
+  // 先整理所有股票歷史資料
   for (const holding of holdings) {
-    const history =
-      state.histories[holding.id] || [];
+    const history = normalizeHistory(
+      state.histories[holding.id]
+    );
+
+    preparedHistories[holding.id] = history;
 
     for (const item of history) {
       if (
-        isValidNumber(item?.time) &&
-        isValidNumber(item?.price)
+        isValidNumber(item.time) &&
+        isValidNumber(item.price)
       ) {
         allTimes.add(Number(item.time));
       }
     }
   }
 
-  const times =
-    [...allTimes]
-      .sort((a, b) => a - b);
+  const preparedFxHistory =
+    normalizeHistory(state.fxHistory);
 
-  if (times.length === 0) {
+  for (const item of preparedFxHistory) {
+    if (
+      isValidNumber(item.time) &&
+      isValidNumber(item.price)
+    ) {
+      allTimes.add(Number(item.time));
+    }
+  }
+
+  const times = [...allTimes]
+    .filter(isValidNumber)
+    .sort((a, b) => a - b);
+
+  if (times.length < 2) {
     return [];
   }
 
-  const preparedHistories = {};
+  const rawTimeline = [];
 
-  for (const holding of holdings) {
-    preparedHistories[holding.id] =
-      normalizeHistory(
-        state.histories[holding.id]
-      );
-  }
-
-  return times.map(time => {
+  for (const time of times) {
     let totalValueTwd = 0;
+    let valid = true;
 
     for (const holding of holdings) {
       const history =
-        preparedHistories[
-          holding.id
-        ];
+        preparedHistories[holding.id] || [];
 
+      const currentPrice =
+        isValidNumber(holding.price)
+          ? Number(holding.price)
+          : Number(holding.fallbackPrice);
+
+      /*
+       * 若時間早於該股票第一筆資料，
+       * 使用第一筆歷史價格，而不是目前價格。
+       */
       const historicalPrice =
-        findLatestPriceAtTime(
+        findPriceAtTime(
           history,
           time,
-          holding.price
+          currentPrice
         );
+
+      if (!isValidNumber(historicalPrice)) {
+        valid = false;
+        break;
+      }
 
       let exchangeRate = 1;
 
-      if (
-        holding.currency === "USD"
-      ) {
+      if (holding.currency === "USD") {
+        const currentFx =
+          isValidNumber(state.usdTwd)
+            ? Number(state.usdTwd)
+            : Number(C.fallbackUsdTwd);
+
         exchangeRate =
-          findLatestPriceAtTime(
-            state.fxHistory,
+          findPriceAtTime(
+            preparedFxHistory,
             time,
-            state.usdTwd
+            currentFx
           );
+
+        if (!isValidNumber(exchangeRate)) {
+          valid = false;
+          break;
+        }
       }
 
-      totalValueTwd +=
+      const quantity = Number(holding.qty);
+
+      if (
+        !Number.isFinite(quantity) ||
+        quantity < 0
+      ) {
+        valid = false;
+        break;
+      }
+
+      const holdingValue =
         historicalPrice *
-        holding.qty *
+        quantity *
         exchangeRate;
+
+      if (
+        !Number.isFinite(holdingValue) ||
+        holdingValue < 0
+      ) {
+        valid = false;
+        break;
+      }
+
+      totalValueTwd += holdingValue;
     }
 
-    return {
-      time,
-      totalValueTwd
-    };
-  });
+    /*
+     * 不讓 NaN、Infinity、0 或錯誤資料
+     * 進入總市值圖表。
+     */
+    if (
+      valid &&
+      Number.isFinite(totalValueTwd) &&
+      totalValueTwd > 0
+    ) {
+      rawTimeline.push({
+        time,
+        totalValueTwd
+      });
+    }
+  }
+
+  return removePortfolioOutliers(rawTimeline);
 }
-  function findLatestPriceAtTime(
+function findPriceAtTime(
   history,
   timestamp,
   fallbackPrice
 ) {
-  if (
-    !Array.isArray(history) ||
-    history.length === 0
-  ) {
-    return Number(fallbackPrice) || 0;
+  const normalizedHistory =
+    normalizeHistory(history);
+
+  if (normalizedHistory.length === 0) {
+    return isValidNumber(fallbackPrice)
+      ? Number(fallbackPrice)
+      : null;
+  }
+
+  const firstItem =
+    normalizedHistory[0];
+
+  const lastItem =
+    normalizedHistory[
+      normalizedHistory.length - 1
+    ];
+
+  /*
+   * 時間早於第一筆歷史資料：
+   * 使用第一筆歷史價格。
+   *
+   * 不能使用現在價格，否則到第一筆資料時
+   * 會產生垂直跳動。
+   */
+  if (timestamp <= firstItem.time) {
+    return firstItem.price;
+  }
+
+  /*
+   * 時間晚於最後一筆：
+   * 延續最後一筆有效價格。
+   */
+  if (timestamp >= lastItem.time) {
+    return lastItem.price;
   }
 
   let left = 0;
   let right =
-    history.length - 1;
+    normalizedHistory.length - 1;
 
-  let result =
-    Number(fallbackPrice) || 0;
+  let result = firstItem.price;
 
   while (left <= right) {
     const middle =
-      Math.floor(
-        (left + right) / 2
-      );
+      Math.floor((left + right) / 2);
 
     const item =
-      history[middle];
+      normalizedHistory[middle];
+
+    if (item.time <= timestamp) {
+      result = item.price;
+      left = middle + 1;
+    } else {
+      right = middle - 1;
+    }
+  }
+
+  return isValidNumber(result)
+    ? Number(result)
+    : null;
+}
+function removePortfolioOutliers(timeline) {
+  if (
+    !Array.isArray(timeline) ||
+    timeline.length < 3
+  ) {
+    return timeline || [];
+  }
+
+  const result = [];
+
+  for (
+    let index = 0;
+    index < timeline.length;
+    index++
+  ) {
+    const current = timeline[index];
 
     if (
-      Number(item.time) <=
-      timestamp
+      !Number.isFinite(current.totalValueTwd) ||
+      current.totalValueTwd <= 0
     ) {
-      result =
-        Number(item.price);
-
-      left =
-        middle + 1;
-    } else {
-      right =
-        middle - 1;
+      continue;
     }
+
+    const previous =
+      result[result.length - 1];
+
+    const next =
+      timeline[index + 1];
+
+    if (!previous || !next) {
+      result.push(current);
+      continue;
+    }
+
+    const previousValue =
+      previous.totalValueTwd;
+
+    const currentValue =
+      current.totalValueTwd;
+
+    const nextValue =
+      next.totalValueTwd;
+
+    const changeFromPrevious =
+      Math.abs(
+        currentValue - previousValue
+      ) / previousValue;
+
+    const changeToNext =
+      Math.abs(
+        currentValue - nextValue
+      ) / nextValue;
+
+    const previousToNext =
+      Math.abs(
+        previousValue - nextValue
+      ) / previousValue;
+
+    /*
+     * 前後兩筆差距很小，但中間一筆突然偏離 25%：
+     * 判定為 API 異常尖刺並移除。
+     */
+    const isSinglePointSpike =
+      changeFromPrevious > 0.25 &&
+      changeToNext > 0.25 &&
+      previousToNext < 0.08;
+
+    if (isSinglePointSpike) {
+      console.warn(
+        "已排除總市值異常資料：",
+        {
+          time: new Date(
+            current.time * 1000
+          ).toLocaleString(),
+          value: currentValue,
+          previous: previousValue,
+          next: nextValue
+        }
+      );
+
+      continue;
+    }
+
+    result.push(current);
   }
 
   return result;
 }
-  function formatChartDate(timestamp) {
+function formatChartDate(timestamp) {
   return new Date(
     Number(timestamp) * 1000
   ).toLocaleString(
