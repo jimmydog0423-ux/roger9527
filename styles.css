@@ -326,3 +326,315 @@
     flex-direction: column;
   }
 }
+/* =========================
+   燒香拜拜浮動按鈕
+========================= */
+
+.pray-floating-btn {
+  position: fixed;
+  right: 26px;
+  bottom: 26px;
+  z-index: 1200;
+
+  width: 92px;
+  height: 92px;
+  padding: 8px;
+
+  border: 2px solid rgba(255, 205, 100, 0.75);
+  border-radius: 50%;
+
+  background:
+    radial-gradient(
+      circle,
+      rgba(255, 125, 65, 0.28),
+      rgba(20, 8, 24, 0.94)
+    );
+
+  box-shadow:
+    0 0 18px rgba(255, 105, 70, 0.55),
+    0 0 38px rgba(255, 190, 60, 0.2);
+
+  cursor: pointer;
+  overflow: hidden;
+
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.pray-floating-btn:hover {
+  transform: translateY(-5px) scale(1.06);
+
+  box-shadow:
+    0 0 24px rgba(255, 105, 70, 0.8),
+    0 0 52px rgba(255, 190, 60, 0.35);
+}
+
+.pray-floating-btn:active {
+  transform: scale(0.9);
+}
+
+.pray-floating-btn img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+
+/* 點擊時按鈕震動 */
+
+.pray-floating-btn.is-praying {
+  animation: prayButtonShake 0.55s ease;
+}
+
+@keyframes prayButtonShake {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+
+  20% {
+    transform: rotate(-9deg) scale(1.08);
+  }
+
+  40% {
+    transform: rotate(9deg) scale(1.08);
+  }
+
+  60% {
+    transform: rotate(-6deg) scale(1.05);
+  }
+
+  80% {
+    transform: rotate(6deg) scale(1.03);
+  }
+
+  100% {
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+/* =========================
+   動畫圖層
+========================= */
+
+.pray-animation-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 1190;
+
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* 每一次點擊產生的動畫組 */
+
+.pray-float-item {
+  --pray-start-x: calc(100vw - 88px);
+  --pray-start-y: calc(100vh - 88px);
+  --pray-end-x: 50vw;
+  --pray-end-y: 24vh;
+  --pray-rotate: 0deg;
+
+  position: fixed;
+  left: 0;
+  top: 0;
+
+  width: min(270px, 48vw);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+
+  opacity: 0;
+
+  transform:
+    translate(
+      var(--pray-start-x),
+      var(--pray-start-y)
+    )
+    translate(-50%, -50%)
+    scale(0.15)
+    rotate(0deg);
+
+  animation:
+    prayFloatUp 4.6s
+    cubic-bezier(0.16, 0.75, 0.25, 1)
+    forwards;
+}
+
+/* 隨機人物圖片 */
+
+.pray-float-image {
+  display: block;
+
+  width: clamp(120px, 18vw, 220px);
+  height: clamp(120px, 18vw, 220px);
+
+  object-fit: cover;
+
+  border: 4px solid rgba(255, 220, 135, 0.95);
+  border-radius: 28px;
+
+  background: rgba(0, 0, 0, 0.85);
+
+  box-shadow:
+    0 0 20px rgba(255, 210, 100, 0.8),
+    0 0 50px rgba(255, 82, 155, 0.45),
+    0 20px 45px rgba(0, 0, 0, 0.6);
+}
+
+/* 祝福文字 */
+
+.pray-float-text {
+  width: max-content;
+  max-width: min(680px, 88vw);
+
+  padding: 12px 22px;
+
+  color: #fff1b0;
+  font-size: clamp(20px, 3vw, 42px);
+  font-weight: 900;
+  line-height: 1.4;
+  text-align: center;
+
+  border: 1px solid rgba(255, 210, 100, 0.55);
+  border-radius: 18px;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(110, 15, 45, 0.91),
+      rgba(30, 7, 28, 0.94)
+    );
+
+  text-shadow:
+    0 0 8px rgba(255, 215, 90, 0.95),
+    0 0 20px rgba(255, 56, 142, 0.85);
+
+  box-shadow:
+    0 0 22px rgba(255, 55, 135, 0.45);
+}
+
+/* 圖片與文字往上飄 */
+
+@keyframes prayFloatUp {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(
+        var(--pray-start-x),
+        var(--pray-start-y)
+      )
+      translate(-50%, -50%)
+      scale(0.15)
+      rotate(0deg);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 1;
+
+    transform:
+      translate(
+        var(--pray-end-x),
+        var(--pray-end-y)
+      )
+      translate(-50%, -50%)
+      scale(1)
+      rotate(var(--pray-rotate));
+  }
+
+  76% {
+    opacity: 1;
+
+    transform:
+      translate(
+        var(--pray-end-x),
+        calc(var(--pray-end-y) - 34px)
+      )
+      translate(-50%, -50%)
+      scale(1.03)
+      rotate(var(--pray-rotate));
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(
+        var(--pray-end-x),
+        -260px
+      )
+      translate(-50%, -50%)
+      scale(0.82)
+      rotate(var(--pray-rotate));
+  }
+}
+
+/* 飄散亮點 */
+
+.pray-spark {
+  --spark-x: 0px;
+  --spark-y: -220px;
+
+  position: fixed;
+  z-index: 1191;
+
+  width: 9px;
+  height: 9px;
+
+  border-radius: 50%;
+
+  background: #ffd56a;
+
+  box-shadow:
+    0 0 8px #ffd56a,
+    0 0 16px #ff7c38;
+
+  pointer-events: none;
+
+  animation: praySparkFly 1.8s ease-out forwards;
+}
+
+@keyframes praySparkFly {
+  0% {
+    opacity: 1;
+    transform:
+      translate(0, 0)
+      scale(0.4);
+  }
+
+  100% {
+    opacity: 0;
+    transform:
+      translate(
+        var(--spark-x),
+        var(--spark-y)
+      )
+      scale(1.5);
+  }
+}
+
+@media (max-width: 700px) {
+  .pray-floating-btn {
+    right: 14px;
+    bottom: 14px;
+    width: 72px;
+    height: 72px;
+  }
+
+  .pray-float-item {
+    width: 86vw;
+  }
+
+  .pray-float-text {
+    width: 86vw;
+    font-size: 22px;
+  }
+}
