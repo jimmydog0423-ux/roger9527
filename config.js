@@ -12,7 +12,7 @@ window.APP_CONFIG = {
 
   holdings: [
     { id:"yageo", name:"國巨", ticker:"2327.TW", apiSymbol:"2327.TW", currency:"TWD", cost:973, qty:400, fallbackPrice:502.00 },
-    { id:"mu", name:"美光", ticker:"MU", apiSymbol:"MU", currency:"USD", cost:955, qty:10, fallbackPrice:874.66 },
+    { id:"mu", name:"美光", ticker:"MU", apiSymbol:"MU", currency:"USD", cost:896, qty:20, fallbackPrice:874.66 },
     { id:"nbis", name:"Nebius", ticker:"NBIS", apiSymbol:"NBIS", currency:"USD", cost:244, qty:70, fallbackPrice:188.43 },
     { id:"skhy", name:"海力士", ticker:"SKHY", apiSymbol:"SKHY", currency:"USD", cost:172, qty:40, fallbackPrice:149.00 },
     { id:"dram", name:"DRAM ETF", ticker:"DRAM", apiSymbol:"DRAM", currency:"USD", cost:64, qty:300, fallbackPrice:52.34 },
