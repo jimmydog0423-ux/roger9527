@@ -445,7 +445,8 @@ function createStockCard(holding) {
     document.querySelector(
       "#totalPortfolioChart"
     );
-
+  const currentValueElement =
+    document.querySelector("#currentPortfolioValue");
   if (!canvas) {
     return;
   }
