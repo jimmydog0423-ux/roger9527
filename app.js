@@ -2820,6 +2820,7 @@ if (document.readyState === "loading") {
   
     throw lastError || new Error("所有 Worker 都無法使用");
   }
+  
   renderSocials();
   render();
   
@@ -2834,3 +2835,23 @@ if (document.readyState === "loading") {
   }
   setTimeout(refresh, 400);
 })();
+
+window.addEventListener("load", () => {
+
+    const notice = document.getElementById("authorNotice");
+    const close = document.getElementById("closeNotice");
+
+    // 一天只顯示一次
+    const today = new Date().toDateString();
+
+    if(localStorage.getItem("noticeDate") === today){
+        notice.style.display = "none";
+        return;
+    }
+
+    close.addEventListener("click", () => {
+        notice.style.display = "none";
+        localStorage.setItem("noticeDate", today);
+    });
+
+});
