@@ -2134,7 +2134,28 @@ if (document.readyState === "loading") {
       x: 0,
       y: 0
     },
-
+    {
+  id: "taishan",
+  name: "泰山",
+  shortName: "泰山",
+  group: "streamer",
+  relation: "分身",
+  description:
+    "經常被觀眾戲稱是羅傑的分身。",
+  x: 200,
+  y: -60
+},
+{
+  id: "krapysister",
+  name: "虧皮妹妹",
+  shortName: "虧皮妹",
+  group: "streamer",
+  relation: "專屬保險業務",
+  description:
+    "為羅傑的專屬保險業員。",
+  x: 220,
+  y: 150
+},
     {
       id: "nl",
       name: "NL（熊班長）",
