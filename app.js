@@ -1719,7 +1719,8 @@ const PRAY_IMAGES = [
 
 const PRAY_MESSAGE =
   "祝羅傑早日離開這充滿惡意的世界";
-
+const PRAY_COOLDOWN = 60 * 1000;
+const PRAY_STORAGE_KEY = "roger_pray_last_time";
 let prayAnimationIndex = 0;
 
 function getRandomPrayImage() {
@@ -1782,6 +1783,21 @@ function createPraySparkles(button) {
 }
 
 async function createPrayFloatAnimation() {
+  const lastTime = Number(
+      localStorage.getItem(PRAY_STORAGE_KEY) || 0
+  );
+  
+  const remain =
+      PRAY_COOLDOWN - (Date.now() - lastTime);
+  
+  if (remain > 0) {
+  
+      toast(
+          `請等待 ${Math.ceil(remain / 1000)} 秒才能再次上香`
+      );
+  
+      return;
+  }
   const button = document.querySelector(
     "#prayFloatingBtn"
   );
@@ -1904,6 +1920,10 @@ async function createPrayFloatAnimation() {
   createPraySparkles(button);
   try {
     await recordPray();
+    localStorage.setItem(
+        PRAY_STORAGE_KEY,
+        Date.now()
+    );
   } catch (error) {
     console.error(
       "上香統計失敗：",
