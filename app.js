@@ -2384,15 +2384,18 @@ const nodes = new vis.DataSet(
       person.image.trim() !== ""
         ? person.image
         : DEFAULT_PERSON_IMAGE;
-
+    const hasImage =
+      typeof person.image === "string" &&
+      person.image.trim() !== "";
     return {
       id: person.id,
       label: person.shortName,
       group: person.group,
 
-      shape: "circularImage",
-      image: personImage,
-      brokenImage: DEFAULT_PERSON_IMAGE,
+      shape: hasImage ? "circularImage" : "dot",
+
+      image: hasImage ? person.image : undefined,
+      
 
       x: person.x,
       y: person.y,
