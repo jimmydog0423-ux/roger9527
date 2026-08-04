@@ -384,13 +384,17 @@ function createStockCard(holding) {
       const canvas = document.getElementById(`chart-${holding.id}`);
       if (!canvas) continue;
 
-      const history = state.histories[holding.id] || [];
+      const history = normalizeHistory(
+        state.histories[holding.id]
+      );
       if (state.charts[holding.id]) {
         state.charts[holding.id].destroy();
         delete state.charts[holding.id];
       }
 
-      if (!history.length) continue;
+      if (history.length < 2) {
+        continue;
+      }
 
       const labels = history.map(item =>
         new Date(item.time * 1000).toLocaleTimeString("zh-TW", {
@@ -719,13 +723,10 @@ function createStockCard(holding) {
 
     for (const item of history) {
       if (
-        Number.isFinite(
-          Number(item.time)
-        )
+        isValidNumber(item?.time) &&
+        isValidNumber(item?.price)
       ) {
-        allTimes.add(
-          Number(item.time)
-        );
+        allTimes.add(Number(item.time));
       }
     }
   }
@@ -742,27 +743,9 @@ function createStockCard(holding) {
 
   for (const holding of holdings) {
     preparedHistories[holding.id] =
-      [...(
-        state.histories[
-          holding.id
-        ] || []
-      )]
-        .filter(item =>
-          Number.isFinite(
-            Number(item.time)
-          ) &&
-          Number.isFinite(
-            Number(item.price)
-          )
-        )
-        .map(item => ({
-          time: Number(item.time),
-          price: Number(item.price)
-        }))
-        .sort(
-          (a, b) =>
-            a.time - b.time
-        );
+      normalizeHistory(
+        state.histories[holding.id]
+      );
   }
 
   return times.map(time => {
@@ -931,6 +914,59 @@ function formatCompactTwd(value) {
     "zh-TW"
   );
 }
+  function isValidNumber(value, options = {}) {
+  const {
+    allowZero = false
+  } = options;
+
+  // 排除 Yahoo 常見空值
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    value === "null" ||
+    value === "undefined"
+  ) {
+    return false;
+  }
+
+  const parsed = Number(value);
+
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+
+  return allowZero ? parsed >= 0 : parsed > 0;
+}
+
+function normalizeHistory(history) {
+  if (!Array.isArray(history)) {
+    return [];
+  }
+
+  const unique = new Map();
+
+  for (const item of history) {
+    if (
+      !isValidNumber(item?.time) ||
+      !isValidNumber(item?.price)
+    ) {
+      continue;
+    }
+
+    const time = Number(item.time);
+    const price = Number(item.price);
+
+    // 避免同一時間重複資料
+    unique.set(time, {
+      time,
+      price
+    });
+  }
+
+  return [...unique.values()]
+    .sort((a, b) => a.time - b.time);
+}
   async function fetchYahooWorker() {
     const symbols = [...new Set([...C.holdings.map(h => h.apiSymbol), "USDTWD=X"])];
     const url = `${C.workerUrl}/?symbols=${encodeURIComponent(symbols.join(","))}&t=${Date.now()}`;
@@ -942,38 +978,51 @@ function formatCompactTwd(value) {
 
     const usdQuote = result.data["USDTWD=X"];
     
-    if (usdQuote?.success && Number.isFinite(Number(usdQuote.price))) {
+    if (
+      usdQuote?.success &&
+      isValidNumber(usdQuote.price)
+    ) {
       state.usdTwd = Number(usdQuote.price);
     }
     if (Array.isArray(usdQuote?.history)) {
-      state.fxHistory =
-        usdQuote.history
-          .filter(item =>
-            Number.isFinite(Number(item.time)) &&
-            Number.isFinite(Number(item.price))
-          )
-          .map(item => ({
-            time: Number(item.time),
-            price: Number(item.price)
-          }))
-          .sort((a, b) => a.time - b.time);
+      const normalizedFxHistory =
+        normalizeHistory(usdQuote.history);
+    
+      // 有有效資料才覆蓋，避免 API 暫時空值清掉舊資料
+      if (normalizedFxHistory.length > 0) {
+        state.fxHistory = normalizedFxHistory;
+      }
     }
     let successCount = 0;
     const failed = [];
 
     for (const h of C.holdings) {
       const quote = result.data[h.apiSymbol];
-      if (quote?.success && Number.isFinite(Number(quote.price))) {
-        state.prices[h.id] = Number(quote.price);
-        if (Array.isArray(quote.history)) {
-          state.histories[h.id] = quote.history
-            .filter(item => Number.isFinite(Number(item?.time)) && Number.isFinite(Number(item?.price)))
-            .map(item => ({ time: Number(item.time), price: Number(item.price) }));
+      if (
+          quote?.success &&
+          isValidNumber(quote.price)
+        ) {
+          state.prices[h.id] = Number(quote.price);
+        
+          if (Array.isArray(quote.history)) {
+            const normalizedHistory =
+              normalizeHistory(quote.history);
+        
+            /*
+             * 有有效走勢資料才覆蓋。
+             * Yahoo 暫時回傳空陣列或全部 null 時，
+             * 保留上一筆成功取得的走勢。
+             */
+            if (normalizedHistory.length > 0) {
+              state.histories[h.id] =
+                normalizedHistory;
+            }
+          }
+        
+          successCount++;
+        } else {
+          failed.push(h.apiSymbol);
         }
-        successCount++;
-      } else {
-        failed.push(h.apiSymbol);
-      }
     }
 
     $("#fxSource").textContent = usdQuote?.success ? "Yahoo Finance" : "預設匯率";
