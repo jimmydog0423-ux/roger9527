@@ -2,9 +2,8 @@
   "use strict";
 
   const C = window.APP_CONFIG;
-  const PRAY_API_URL = C.workerUrl;
   if (!C) throw new Error("找不到 APP_CONFIG，請確認 config.js 已正確載入。");
-
+  const PRAY_API_URL = C.workerUrl;
   const state = {
     prices: Object.fromEntries(
       C.holdings.map(h => [
