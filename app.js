@@ -2148,230 +2148,227 @@ if (document.readyState === "loading") {
   };
 
   const people = [
-    {
-      id: "roger",
-      name: "羅傑",
-      shortName: "羅傑",
-      image: "assets/images/people/roger.jpg",
-      group: "center",
-      relation: "中心",
-      description:
-        "共同創辦人、核心藝人，也是整張人際關係圖的中心節點。",
-      x: 0,
-      y: 0
-    },
-    {
-  id: "taishan",
-  name: "泰山",
-  shortName: "泰山",
-  group: "streamer",
-  relation: "分身",
-  description:
-    "經常被觀眾戲稱是羅傑的分身。",
-  x: 200,
-  y: -60
-},
-{
-  id: "krapysister",
-  name: "虧皮妹妹",
-  shortName: "虧皮妹",
-  group: "streamer",
-  relation: "專屬保險業務",
-  description:
-    "為羅傑的專屬保險業員。",
-  x: 220,
-  y: 150
-},
-    {
-      id: "nl",
-      name: "NL（熊班長）",
-      shortName: "NL",
-      group: "xd",
-      relation: "夫妻",
-      description:
-        "XD娛樂共同創辦人、公司老闆，也是羅傑長期合作與互動的重要夥伴。",
-      x: -220,
-      y: -310
-    },
-    {
-      id: "shaxy",
-      name: "薛喜",
-      shortName: "薛喜",
-      group: "xd",
-      relation: "難兄難弟",
-      description:
-        "XD娛樂旗下核心藝人，也是羅傑過去《爐石戰記》選手時期的戰友。",
-      x: -60,
-      y: -340
-    },
-    {
-      id: "eason",
-      name: "Eason（蕭老師／發仔）",
-      shortName: "Eason",
-      group: "xd",
-      relation: "麻將損友",
-      description:
-        "XD娛樂旗下核心藝人，主要進行爐石與格鬥遊戲實況。",
-      x: 110,
-      y: -330
-    },
-    {
-      id: "vivi",
-      name: "Vivi",
-      shortName: "Vivi",
-      group: "xd",
-      relation: "小三",
-      description:
-        "XD娛樂旗下核心藝人，與羅傑具有多年情誼的女性實況主好友。",
-      x: 260,
-      y: -250
-    },
-    {
-      id: "krapy",
-      name: "Krapy（虧皮）",
-      shortName: "Krapy",
-      group: "xd",
-      relation: "損友",
-      description:
-        "XD娛樂旗下核心藝人，是羅傑在射擊遊戲與戰棋內容中的長年搭檔。",
-      x: 340,
-      y: -100
-    },
-    {
-      id: "tommy",
-      name: "偷米",
-      shortName: "偷米",
-      group: "xd",
-      relation: "麻將損友",
-      description:
-        "XD娛樂旗下核心藝人，前爐石職業選手，也是羅傑過去的賽事戰友。",
-      x: 360,
-      y: 70
-    },
-    {
-      id: "hagon",
-      name: "哈耿",
-      shortName: "哈耿",
-      group: "xd",
-      relation: "寵物鯰魚",
-      description:
-        "XD娛樂旗下核心藝人，擅長短影音內容與《特戰英豪》實況。",
-      x: 300,
-      y: 230
-    },
-    {
-      id: "egghead",
-      name: "蛋頭",
-      shortName: "蛋頭",
-      group: "xd",
-      relation: "損友",
-      description:
-        "XD娛樂旗下核心藝人，知名嘻哈饒舌歌手兼實況主。",
-      x: 170,
-      y: 340
-    },
-    {
-      id: "yuexi",
-      name: "月希",
-      shortName: "月希",
-      group: "xd",
-      relation: "麻吉",
-      description:
-        "XD娛樂旗下核心藝人，也是資深 ACG 與電玩節目主持人。",
-      x: 0,
-      y: 370
-    },
-    {
-      id: "asen",
-      name: "阿森",
-      shortName: "阿森",
-      group: "xd",
-      relation: "麻吉",
-      description:
-        "XD娛樂旗下核心藝人，前 FPS 職業選手兼資深賽評。",
-      x: -170,
-      y: 340
-    },
-    {
-      id: "kent",
-      name: "肯特",
-      shortName: "肯特",
-      group: "xd",
-      relation: "損友",
-      description:
-        "XD娛樂旗下核心藝人，知名格鬥遊戲《快打旋風》好手。",
-      x: -300,
-      y: 230
-    },
-    {
-      id: "mmd",
-      name: "咪咪蛋",
-      shortName: "咪咪蛋",
-      group: "xd",
-      relation: "損友",
-      description:
-        "XD娛樂旗下核心藝人，前閃電狼《英雄聯盟》職業選手。",
-      x: -370,
-      y: 70
-    },
-    {
-      id: "guidong",
-      name: "鬼東",
-      shortName: "鬼東",
-      group: "xd",
-      relation: "最強後盾",
-      description:
-        "XD娛樂的幕後核心推手，主要負責公司營運與藝人經紀事務。",
-      x: -350,
-      y: -110
-    },
-
-    {
-      id: "weifu",
-      name: "威傅",
-      shortName: "威傅",
-      group: "hearthstone",
-      relation: "損友",
-      description:
-        "經常出現在羅傑實況精華，也是常一起語音通話的爐石老戰友。",
-      x: -520,
-      y: -270
-    },
-    {
-      id: "uzra",
-      name: "Uzra",
-      shortName: "Uzra",
-      group: "hearthstone",
-      relation: "損友",
-      description:
-        "戰棋與爐石圈大老，實況上與羅傑亦敵亦友，也是經常互相玩梗的對象。",
-      x: -550,
-      y: 200
-    },
-
-    {
-      id: "turtle",
-      name: "龜狗",
-      shortName: "龜狗",
-      group: "streamer",
-      relation: "損友",
-      description:
-        "早期 DC 語音群的固定班底，也是與羅傑私下交情良好的好友。",
-      x: 540,
-      y: -240
-    },
-    {
-      id: "overload",
-      name: "超負荷",
-      shortName: "超負荷",
-      group: "streamer",
-      relation: "正代餐",
-      description:
-        "早期紅色學校同僚，實況效果上經常相愛相殺，也是長期的玩梗對象。",
-      x: 550,
-      y: 210
-    }
-  ];
+  {
+    id: "roger",
+    name: "羅傑",
+    shortName: "羅傑",
+    image: "assets/images/people/roger.jpg",
+    group: "center",
+    relation: "中心",
+    description: "共同創辦人、核心藝人，也是整張人際關係圖的中心節點。",
+    x: 0,
+    y: 0
+  },
+  {
+    id: "taishan",
+    name: "泰山",
+    shortName: "泰山",
+    image: "assets/images/people/泰山.jpg",
+    group: "streamer",
+    relation: "分身",
+    description: "經常被觀眾戲稱是羅傑的分身。",
+    x: 200,
+    y: -60
+  },
+  {
+    id: "krapysister",
+    name: "虧皮妹妹",
+    shortName: "虧皮妹",
+    image: "assets/images/people/虧皮妹.png",
+    group: "streamer",
+    relation: "專屬保險業務",
+    description: "為羅傑的專屬保險業員。",
+    x: 220,
+    y: 150
+  },
+  {
+    id: "nl",
+    name: "NL（熊班長）",
+    shortName: "NL",
+    image: "assets/images/people/nl.jpg",
+    group: "xd",
+    relation: "夫妻",
+    description: "XD娛樂共同創辦人、公司老闆，也是羅傑長期合作與互動的重要夥伴。",
+    x: -220,
+    y: -310
+  },
+  {
+    id: "shaxy",
+    name: "薛喜",
+    shortName: "薛喜",
+    image: "assets/images/people/薛喜.jpg",
+    group: "xd",
+    relation: "難兄難弟",
+    description: "XD娛樂旗下核心藝人，也是羅傑過去《爐石戰記》選手時期的戰友。",
+    x: -60,
+    y: -340
+  },
+  {
+    id: "eason",
+    name: "Eason（蕭老師／發仔）",
+    shortName: "Eason",
+    image: "assets/images/people/發仔.png",
+    group: "xd",
+    relation: "麻將損友",
+    description: "XD娛樂旗下核心藝人，主要進行爐石與格鬥遊戲實況。",
+    x: 110,
+    y: -330
+  },
+  {
+    id: "vivi",
+    name: "Vivi",
+    shortName: "Vivi",
+    image: "assets/images/people/vivi.png",
+    group: "xd",
+    relation: "小三",
+    description: "XD娛樂旗下核心藝人，與羅傑具有多年情誼的女性實況主好友。",
+    x: 260,
+    y: -250
+  },
+  {
+    id: "krapy",
+    name: "Krapy（虧皮）",
+    shortName: "Krapy",
+    image: "assets/images/people/哈K.jpg",
+    group: "xd",
+    relation: "損友",
+    description: "XD娛樂旗下核心藝人，是羅傑在射擊遊戲與戰棋內容中的長年搭檔。",
+    x: 340,
+    y: -100
+  },
+  {
+    id: "tommy",
+    name: "偷米",
+    shortName: "偷米",
+    image: "assets/images/people/tommy.png",
+    group: "xd",
+    relation: "麻將損友",
+    description: "XD娛樂旗下核心藝人，前爐石職業選手，也是羅傑過去的賽事戰友。",
+    x: 360,
+    y: 70
+  },
+  {
+    id: "hagon",
+    name: "哈耿",
+    shortName: "哈耿",
+    image: "assets/images/people/哈耿.jpg",
+    group: "xd",
+    relation: "寵物鯰魚",
+    description: "XD娛樂旗下核心藝人，擅長短影音內容與《特戰英豪》實況。",
+    x: 300,
+    y: 230
+  },
+  {
+    id: "egghead",
+    name: "蛋頭",
+    shortName: "蛋頭",
+    image: "assets/images/people/蛋頭.png",
+    group: "xd",
+    relation: "損友",
+    description: "XD娛樂旗下核心藝人，知名嘻哈饒舌歌手兼實況主。",
+    x: 170,
+    y: 340
+  },
+  {
+    id: "yuexi",
+    name: "月希",
+    shortName: "月希",
+    image: "assets/images/people/月希.jpg",
+    group: "xd",
+    relation: "麻吉",
+    description: "XD娛樂旗下核心藝人，也是資深 ACG 與電玩節目主持人。",
+    x: 0,
+    y: 370
+  },
+  {
+    id: "asen",
+    name: "阿森",
+    shortName: "阿森",
+    image: "assets/images/people/阿森.jpg",
+    group: "xd",
+    relation: "麻吉",
+    description: "XD娛樂旗下核心藝人，前 FPS 職業選手兼資深賽評。",
+    x: -170,
+    y: 340
+  },
+  {
+    id: "kent",
+    name: "肯特",
+    shortName: "肯特",
+    image: "assets/images/people/肯特.jpg",
+    group: "xd",
+    relation: "損友",
+    description: "XD娛樂旗下核心藝人，知名格鬥遊戲《快打旋風》好手。",
+    x: -300,
+    y: 230
+  },
+  {
+    id: "mmd",
+    name: "咪咪蛋",
+    shortName: "咪咪蛋",
+    image: "assets/images/people/mmd.jpg",
+    group: "xd",
+    relation: "損友",
+    description: "XD娛樂旗下核心藝人，前閃電狼《英雄聯盟》職業選手。",
+    x: -370,
+    y: 70
+  },
+  {
+    id: "guidong",
+    name: "鬼東",
+    shortName: "鬼東",
+    image: "assets/images/people/鬼東.jpg",
+    group: "xd",
+    relation: "最強後盾",
+    description: "XD娛樂的幕後核心推手，主要負責公司營運與藝人經紀事務。",
+    x: -350,
+    y: -110
+  },
+  {
+    id: "weifu",
+    name: "威傅",
+    shortName: "威傅",
+    image: "assets/images/people/威傅.jpg",
+    group: "hearthstone",
+    relation: "損友",
+    description: "經常出現在羅傑實況精華，也是常一起語音通話的爐石老戰友。",
+    x: -520,
+    y: -270
+  },
+  {
+    id: "uzra",
+    name: "Uzra",
+    shortName: "Uzra",
+    image: "assets/images/people/uzra.png",
+    group: "hearthstone",
+    relation: "損友",
+    description: "戰棋與爐石圈大老，實況上與羅傑亦敵亦友，也是經常互相玩梗的對象。",
+    x: -550,
+    y: 200
+  },
+  {
+    id: "turtle",
+    name: "龜狗",
+    shortName: "龜狗",
+    image: "assets/images/people/龜狗.png",
+    group: "streamer",
+    relation: "損友",
+    description: "早期 DC 語音群的固定班底，也是與羅傑私下交情良好的好友。",
+    x: 540,
+    y: -240
+  },
+  {
+    id: "overload",
+    name: "超負荷",
+    shortName: "超負荷",
+    image: "assets/images/people/超負荷.jng",
+    group: "streamer",
+    relation: "正代餐",
+    description: "早期紅色學校同僚，實況效果上經常相愛相殺，也是長期的玩梗對象。",
+    x: 550,
+    y: 210
+  }
+];
 
   const groupColors = {
     center: {
