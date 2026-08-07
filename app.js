@@ -1972,13 +1972,17 @@ function setupPrayAnimation() {
 const EGG_REVEAL_AT =
   new Date("2026-08-08T00:00:00+08:00").getTime();
 
+const EGG_HIDE_AT =
+  new Date("2026-08-09T00:00:00+08:00").getTime();
+
 const EGG_CLICK_TARGET = 12;
 
 const EGG_CLICKS_STORAGE_KEY = "roger_egg_clicks";
 const EGG_HATCHED_STORAGE_KEY = "roger_egg_hatched";
 
 function isEggEventLive() {
-  return Date.now() >= EGG_REVEAL_AT;
+  const now = Date.now();
+  return now >= EGG_REVEAL_AT && now < EGG_HIDE_AT;
 }
 
 function getEggClicks() {
