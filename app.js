@@ -1966,6 +1966,227 @@ function setupPrayAnimation() {
     createPrayFloatAnimation
   );
 }
+
+/* ===== 父親節孵蛋彩蛋 ===== */
+
+const EGG_REVEAL_AT =
+  new Date("2026-08-08T00:00:00+08:00").getTime();
+
+const EGG_CLICK_TARGET = 12;
+
+const EGG_CLICKS_STORAGE_KEY = "roger_egg_clicks";
+const EGG_HATCHED_STORAGE_KEY = "roger_egg_hatched";
+
+function isEggEventLive() {
+  return Date.now() >= EGG_REVEAL_AT;
+}
+
+function getEggClicks() {
+  return Number(
+    localStorage.getItem(EGG_CLICKS_STORAGE_KEY) || 0
+  );
+}
+
+function setEggClicks(value) {
+  localStorage.setItem(
+    EGG_CLICKS_STORAGE_KEY,
+    String(value)
+  );
+}
+
+function isEggHatched() {
+  return (
+    localStorage.getItem(EGG_HATCHED_STORAGE_KEY) === "1"
+  );
+}
+
+function setEggHatched() {
+  localStorage.setItem(EGG_HATCHED_STORAGE_KEY, "1");
+}
+
+function updateEggCrackStage(button, clicks) {
+  const ratio = clicks / EGG_CLICK_TARGET;
+
+  button.classList.remove("crack-1", "crack-2", "crack-3");
+
+  if (ratio >= 0.75) {
+    button.classList.add("crack-3");
+  } else if (ratio >= 0.5) {
+    button.classList.add("crack-2");
+  } else if (ratio >= 0.25) {
+    button.classList.add("crack-1");
+  }
+}
+
+function renderEggHatchedState(button) {
+  button.classList.add("is-hatched");
+
+  const countEl = document.getElementById("eggClickCount");
+  const hintEl = document.getElementById("eggHint");
+
+  if (countEl) {
+    countEl.textContent = String(EGG_CLICK_TARGET);
+  }
+
+  if (hintEl) {
+    hintEl.textContent = "V仔獸已誕生，點我再看一次";
+  }
+
+  updateEggCrackStage(button, EGG_CLICK_TARGET);
+}
+
+function syncRogerModalBodyScroll() {
+  const anyOpen = document.querySelector(
+    ".roger-modal.is-open"
+  );
+
+  document.body.classList.toggle(
+    "roger-modal-open",
+    !!anyOpen
+  );
+}
+
+function openEggHatchModal() {
+  const modal = document.getElementById("eggHatchModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.add("is-open");
+  modal.setAttribute("aria-hidden", "false");
+  syncRogerModalBodyScroll();
+}
+
+function closeEggHatchModal() {
+  const modal = document.getElementById("eggHatchModal");
+
+  if (!modal) {
+    return;
+  }
+
+  modal.classList.remove("is-open");
+  modal.setAttribute("aria-hidden", "true");
+  syncRogerModalBodyScroll();
+}
+
+function hatchEgg(button) {
+  setEggHatched();
+
+  button.classList.add("is-hatching");
+
+  playTone("success");
+  burst(
+    button.getBoundingClientRect().left + 30,
+    button.getBoundingClientRect().top + 30,
+    40
+  );
+
+  window.setTimeout(() => {
+    button.classList.remove("is-hatching");
+    renderEggHatchedState(button);
+    openEggHatchModal();
+  }, 620);
+}
+
+function handleEggClick(button, countEl) {
+  if (isEggHatched()) {
+    openEggHatchModal();
+    return;
+  }
+
+  const clicks = Math.min(
+    getEggClicks() + 1,
+    EGG_CLICK_TARGET
+  );
+
+  setEggClicks(clicks);
+
+  if (countEl) {
+    countEl.textContent = String(clicks);
+  }
+
+  updateEggCrackStage(button, clicks);
+
+  button.classList.remove("is-tapped");
+  void button.offsetWidth;
+  button.classList.add("is-tapped");
+
+  window.setTimeout(() => {
+    button.classList.remove("is-tapped");
+  }, 350);
+
+  playTone("soft");
+
+  if (clicks >= EGG_CLICK_TARGET) {
+    hatchEgg(button);
+  }
+}
+
+function setupEggHatch() {
+  const area = document.getElementById("eggFixedArea");
+  const button = document.getElementById("eggFloatingBtn");
+  const countEl = document.getElementById("eggClickCount");
+  const targetEl = document.getElementById("eggClickTarget");
+  const modal = document.getElementById("eggHatchModal");
+  const closeBtn = document.getElementById("closeEggHatchBtn");
+  const image = document.getElementById("eggHatchImage");
+  const imageFallback = document.getElementById(
+    "eggHatchImageFallback"
+  );
+
+  if (!area || !button || !modal) {
+    console.warn("找不到父親節孵蛋彩蛋所需的 HTML 元素");
+    return;
+  }
+
+  if (!isEggEventLive()) {
+    return;
+  }
+
+  area.removeAttribute("hidden");
+
+  if (targetEl) {
+    targetEl.textContent = String(EGG_CLICK_TARGET);
+  }
+
+  const savedClicks = Math.min(
+    getEggClicks(),
+    EGG_CLICK_TARGET
+  );
+
+  if (countEl) {
+    countEl.textContent = String(savedClicks);
+  }
+
+  updateEggCrackStage(button, savedClicks);
+
+  if (isEggHatched()) {
+    renderEggHatchedState(button);
+  }
+
+  button.addEventListener("click", () => {
+    handleEggClick(button, countEl);
+  });
+
+  if (image && imageFallback) {
+    image.addEventListener(
+      "error",
+      () => {
+        image.hidden = true;
+        imageFallback.hidden = false;
+      },
+      { once: true }
+    );
+  }
+
+  closeBtn?.addEventListener("click", closeEggHatchModal);
+
+  modal
+    .querySelector("[data-close-egg-modal]")
+    ?.addEventListener("click", closeEggHatchModal);
+}
+
 function setupRogerAboutModal() {
   const aboutButton =
     document.getElementById("aboutRogerBtn");
@@ -2843,7 +3064,9 @@ if (document.readyState === "loading") {
   
   setupPrayAnimation();
   loadPrayStats();
-  
+
+  setupEggHatch();
+
   const autoRefreshBtn =
     $("#autoRefreshBtn");
   if (autoRefreshBtn) {
