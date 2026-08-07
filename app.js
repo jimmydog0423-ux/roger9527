@@ -2940,7 +2940,7 @@ function updateMessageFormNote() {
     }
   }
 }
-
+let messageSubmitting = false;
 function setupMessageBoard() {
   const form = document.getElementById("messageForm");
   const nicknameInput = document.getElementById(
@@ -2960,7 +2960,9 @@ function setupMessageBoard() {
 
   form.addEventListener("submit", async event => {
     event.preventDefault();
-
+    if (messageSubmitting) {
+      return;
+    }
     if (getMessageCooldownRemaining() > 0) {
       return;
     }
@@ -2997,7 +2999,7 @@ function setupMessageBoard() {
     const submitBtn = document.getElementById(
       "messageSubmitBtn"
     );
-
+    messageSubmitting = true;
     if (submitBtn) {
       submitBtn.disabled = true;
     }
@@ -3027,6 +3029,8 @@ function setupMessageBoard() {
       if (submitBtn) {
         submitBtn.disabled = false;
       }
+    }finally {
+      messageSubmitting = false;
     }
   });
 }
@@ -3876,32 +3880,56 @@ if (document.readyState === "loading") {
   setupRogerRelationshipGraph();
 }
   async function fetchWithFallback(path, options = {}) {
-    const urls = [C.workerUrl, C.workerUrl2].filter(Boolean);
-  
-    let lastError;
-  
-    for (const baseUrl of urls) {
-      try {
-        const response = await fetch(`${baseUrl}${path}`, options);
-  
-        // 免費方案超過每日額度通常會回 429
-        if (response.status === 429) {
-          throw new Error("Worker quota exceeded");
-        }
-  
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-  
-        return response;
-      } catch (error) {
-        console.warn(`${baseUrl} 失敗，切換下一個 Worker`, error);
-        lastError = error;
-      }
+  const urls = [C.workerUrl, C.workerUrl2].filter(Boolean);
+
+  const method = (options.method || "GET").toUpperCase();
+
+  // 寫入操作禁止 retry，避免重複 INSERT
+  if (method !== "GET" && method !== "HEAD") {
+    const response = await fetch(
+      `${urls[0]}${path}`,
+      options
+    );
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
     }
-  
-    throw lastError || new Error("所有 Worker 都無法使用");
+
+    return response;
   }
+
+  let lastError;
+
+  for (const baseUrl of urls) {
+    try {
+      const response = await fetch(
+        `${baseUrl}${path}`,
+        options
+      );
+
+      if (response.status === 429) {
+        throw new Error("Worker quota exceeded");
+      }
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      return response;
+
+    } catch (error) {
+      console.warn(
+        `${baseUrl} 失敗，切換下一個 Worker`,
+        error
+      );
+
+      lastError = error;
+    }
+  }
+
+  throw lastError ||
+    new Error("所有 Worker 都無法使用");
+}
   
   renderSocials();
   render();
