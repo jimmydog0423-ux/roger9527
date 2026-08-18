@@ -17,7 +17,7 @@ window.APP_CONFIG = {
     { id:"skhy", name:"海力士", ticker:"SKHY", apiSymbol:"SKHY", currency:"USD", cost:172, qty:40, fallbackPrice:149.00 },
     { id:"dram", name:"DRAM ETF", ticker:"DRAM", apiSymbol:"DRAM", currency:"USD", cost:64, qty:300, fallbackPrice:52.34 },
     { id:"spcx", name:"SpaceX", ticker:"SPCX", apiSymbol:"SPCX", currency:"USD", cost:174, qty:90, fallbackPrice:112.20 },
-    { id:"TSLA", name:"TSLA", ticker:"TSLA", apiSymbol:"TSLA", currency:"USD", cost:174, qty:30, fallbackPrice:339 },
+    { id:"TSLA", name:"TSLA", ticker:"TSLA", apiSymbol:"TSLA", currency:"USD", cost:339, qty:30, fallbackPrice:339 },
     { id: "mrvl", name: "邁威爾", ticker: "MRVL", market: "US", apiSymbol: "MRVL", currency: "USD", cost: 307, qty: 50, fallbackPrice: 183.30 },
     { id:"nvda", name:"輝達", ticker:"NVDA", apiSymbol:"NVDA", currency:"USD", cost:210, qty:60, fallbackPrice:195.04 },
     { id:"umc", name:"聯電", ticker:"2303.TW", apiSymbol:"2303.TW", currency:"TWD", cost:167, qty:4000, fallbackPrice:121.00 },
