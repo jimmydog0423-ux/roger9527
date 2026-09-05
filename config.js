@@ -1,5 +1,5 @@
 window.APP_CONFIG = {
-  refreshSeconds: 86400,
+  refreshSeconds: 3600,
   workerUrl: "https://lucky-rice-01c0.jimmydog0423.workers.dev",
   workerUrl2: "https://crimson-union-c21f.jimmydog0702.workers.dev",
   fallbackUsdTwd: 31.63,
@@ -10,23 +10,18 @@ window.APP_CONFIG = {
     { name: "YouTube", url: "https://www.youtube.com/@Roger9527-sb", icon: "YT" }
   ],
 
-  /*
-   * 羅傑沒有公開完整成本、股數、買賣價格與即時持倉細節。
-   * 所以這裡不假裝能算出真實即時損益，而是以 2026/09/04 的公開損益
-   * 當基準，再用台股 / 美股大盤相對基準點的變化做動態估算。
-   */
   holdings: [],
 
   disclosedPortfolio: {
     baselineDate: "2026/09/04",
     taiwanTotal: -320000,
     usTotal: -5800,
+    reportedFxTwd: 31.63,
 
     marketBaseline: {
       twSymbol: "^TWII",
       twName: "台灣加權指數",
       twIndex: 46551.13,
-
       usSymbol: "^IXIC",
       usName: "NASDAQ Composite",
       usIndex: 26506.99
@@ -54,7 +49,7 @@ window.APP_CONFIG = {
 
   const C = window.APP_CONFIG;
   const disclosed = C.disclosedPortfolio;
-  const REFRESH_MS = 60 * 1000;
+  const REFRESH_MS = 60 * 60 * 1000;
 
   const state = {
     twIndex: disclosed.marketBaseline.twIndex,
@@ -73,7 +68,6 @@ window.APP_CONFIG = {
     console.warn("無法寫入自動更新設定", error);
   }
 
-  /* 阻止舊 app.js 在載入後立即啟動舊持倉行情刷新。 */
   const nativeSetTimeout = window.setTimeout.bind(window);
   window.setTimeout = function (callback, delay, ...args) {
     if (
@@ -113,14 +107,30 @@ window.APP_CONFIG = {
   };
 
   const calculate = () => {
-    const twEstimated = estimatedPnl(disclosed.taiwanTotal, state.twChange);
-    const usEstimated = estimatedPnl(disclosed.usTotal, state.usChange);
-    const totalTwd = twEstimated + usEstimated * state.usdTwd;
+    const reportedTotalTwd =
+      disclosed.taiwanTotal +
+      disclosed.usTotal * disclosed.reportedFxTwd;
+
+    const twEstimated = estimatedPnl(
+      disclosed.taiwanTotal,
+      state.twChange
+    );
+
+    const usEstimated = estimatedPnl(
+      disclosed.usTotal,
+      state.usChange
+    );
+
+    const simulatedTotalTwd =
+      twEstimated +
+      usEstimated * state.usdTwd;
 
     return {
+      reportedTotalTwd,
       twEstimated,
       usEstimated,
-      totalTwd
+      simulatedTotalTwd,
+      differenceTwd: simulatedTotalTwd - reportedTotalTwd
     };
   };
 
@@ -132,7 +142,7 @@ window.APP_CONFIG = {
     const value = sold ? null : estimatedPnl(position.pnl, state.usChange);
 
     return `
-      <article class="public-position-card ${sold ? "is-sold" : cardClass(value)}" data-public-id="${position.id}">
+      <article class="public-position-card ${sold ? "is-sold" : cardClass(value)}">
         <div class="public-position-head">
           <div>
             <span class="public-ticker">${tickerText}</span>
@@ -144,7 +154,9 @@ window.APP_CONFIG = {
           ${sold ? "已賣出" : formatUsd(value)}
         </strong>
         <small>
-          ${sold ? "不列入目前估算" : `公開基準 ${formatUsd(position.pnl)} · 依美股市場變動估算`}
+          ${sold
+            ? "不列入目前模擬"
+            : `本人公開 ${formatUsd(position.pnl)} · 模擬值依美股市場變動`}
         </small>
       </article>
     `;
@@ -154,23 +166,6 @@ window.APP_CONFIG = {
     document.querySelector(".message-board-section")?.remove();
     document.querySelector(".message-ticker-wrap")?.remove();
     document.getElementById("messageForm")?.remove();
-  }
-
-  function updateAuthorNotice() {
-    const notice = document.getElementById("authorNotice");
-    if (!notice) return;
-
-    const paragraphs = notice.querySelectorAll(".notice-box > p");
-    if (paragraphs[0]) {
-      paragraphs[0].textContent = "hi 我是吉米狗，9/5更新如下";
-    }
-    if (paragraphs[1]) {
-      paragraphs[1].innerHTML = [
-        "1. 台股 / 美股損益改成隨市場變動的動態估算",
-        "2. 新增總收益，統一換算成新台幣",
-        "3. 保留公開損益基準，不假設未公開成本與股數"
-      ].join("<br>");
-    }
   }
 
   function hideLegacyFinance() {
@@ -186,6 +181,23 @@ window.APP_CONFIG = {
     const autoRefreshBtn = document.getElementById("autoRefreshBtn");
     if (refreshBtn) refreshBtn.hidden = true;
     if (autoRefreshBtn) autoRefreshBtn.hidden = true;
+  }
+
+  function updateAuthorNotice() {
+    const notice = document.getElementById("authorNotice");
+    if (!notice) return;
+
+    const paragraphs = notice.querySelectorAll(".notice-box > p");
+    if (paragraphs[0]) {
+      paragraphs[0].textContent = "hi 我是吉米狗，9/5更新如下";
+    }
+    if (paragraphs[1]) {
+      paragraphs[1].innerHTML = [
+        "1. 總損益分成本人公開與市場模擬兩種",
+        "2. 模擬損益每 1 小時更新一次",
+        "3. 本人公開損益固定保留，不受行情改動"
+      ].join("<br>");
+    }
   }
 
   function installStyle() {
@@ -219,11 +231,18 @@ window.APP_CONFIG = {
         text-align: right;
       }
 
-      .public-summary-grid {
+      .public-total-grid {
         display: grid;
-        grid-template-columns: 1.35fr 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 16px;
-        margin-bottom: 18px;
+        margin-bottom: 16px;
+      }
+
+      .public-breakdown-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 24px;
       }
 
       .public-summary-card,
@@ -244,6 +263,14 @@ window.APP_CONFIG = {
         border-width: 2px;
       }
 
+      .public-summary-card.reported-total {
+        background: rgba(25, 20, 42, .82);
+      }
+
+      .public-summary-card.simulated-total {
+        background: rgba(12, 18, 34, .86);
+      }
+
       .public-summary-card span,
       .public-summary-card small,
       .public-market-card small,
@@ -255,7 +282,7 @@ window.APP_CONFIG = {
       .public-summary-card strong {
         display: block;
         margin: 8px 0 6px;
-        font-size: clamp(28px, 3.6vw, 50px);
+        font-size: clamp(27px, 3.4vw, 48px);
         line-height: 1;
       }
 
@@ -279,7 +306,7 @@ window.APP_CONFIG = {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
         gap: 14px;
-        margin-bottom: 26px;
+        margin-bottom: 22px;
       }
 
       .public-market-card {
@@ -298,9 +325,7 @@ window.APP_CONFIG = {
         font-size: 25px;
       }
 
-      .public-market-change {
-        font-weight: 900;
-      }
+      .public-market-change { font-weight: 900; }
 
       .public-toolbar {
         display: flex;
@@ -385,7 +410,8 @@ window.APP_CONFIG = {
       .public-disclosure-note strong { color: #fff; }
 
       @media (max-width: 980px) {
-        .public-summary-grid,
+        .public-total-grid,
+        .public-breakdown-grid,
         .public-market-grid { grid-template-columns: 1fr; }
         .public-position-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
@@ -416,41 +442,62 @@ window.APP_CONFIG = {
       ? state.updatedAt.toLocaleString("zh-TW", { hour12: false })
       : "尚未取得最新行情";
 
+    const diffText = result.differenceTwd >= 0
+      ? `比本人公開基準改善 ${formatTwd(result.differenceTwd)}`
+      : `比本人公開基準惡化 ${formatTwd(result.differenceTwd)}`;
+
     section.innerHTML = `
       <div class="public-section-head">
         <div>
-          <p class="eyebrow">MARKET-ADJUSTED PNL ESTIMATE</p>
-          <h2>羅傑動態損益估算</h2>
+          <p class="eyebrow">REPORTED VS SIMULATED PNL</p>
+          <h2>羅傑總損益</h2>
         </div>
-        <p>公開損益基準：${disclosed.baselineDate}</p>
+        <p>本人公開基準：${disclosed.baselineDate}</p>
       </div>
 
-      <div class="public-summary-grid">
-        <article class="public-summary-card total-return ${cardClass(result.totalTwd)}">
-          <span>總收益（台幣）</span>
-          <strong>${formatTwd(result.totalTwd)}</strong>
-          <small>台股估算損益 + 美股估算損益 × USD/TWD</small>
+      <div class="public-total-grid">
+        <article class="public-summary-card total-return reported-total ${cardClass(result.reportedTotalTwd)}">
+          <span>羅傑本人說的總損益</span>
+          <strong>${formatTwd(result.reportedTotalTwd)}</strong>
+          <small>
+            台股 ${formatTwd(disclosed.taiwanTotal)} + 美股 ${formatUsd(disclosed.usTotal)}；
+            美股以基準匯率 ${disclosed.reportedFxTwd.toFixed(2)} 換算
+          </small>
         </article>
 
-        <article class="public-summary-card ${cardClass(result.twEstimated)}">
-          <span>台股估算總損益</span>
-          <strong>${formatTwd(result.twEstimated)}</strong>
-          <small>公開基準 ${formatTwd(disclosed.taiwanTotal)}</small>
+        <article class="public-summary-card total-return simulated-total ${cardClass(result.simulatedTotalTwd)}">
+          <span>模擬總損益</span>
+          <strong>${formatTwd(result.simulatedTotalTwd)}</strong>
+          <small>${diffText} · 隨市場與匯率更新</small>
+        </article>
+      </div>
+
+      <div class="public-breakdown-grid">
+        <article class="public-summary-card ${cardClass(disclosed.taiwanTotal)}">
+          <span>本人公開台股損益</span>
+          <strong>${formatTwd(disclosed.taiwanTotal)}</strong>
+          <small>固定公開數字，不隨行情改動</small>
         </article>
 
-        <article class="public-summary-card ${cardClass(result.usEstimated)}">
-          <span>美股估算總損益</span>
-          <strong>${formatUsd(result.usEstimated)}</strong>
-          <small>公開基準 ${formatUsd(disclosed.usTotal)}</small>
+        <article class="public-summary-card ${cardClass(disclosed.usTotal)}">
+          <span>本人公開美股損益</span>
+          <strong>${formatUsd(disclosed.usTotal)}</strong>
+          <small>固定公開數字，不隨行情改動</small>
+        </article>
+
+        <article class="public-summary-card ${cardClass(result.twEstimated + result.usEstimated * state.usdTwd)}">
+          <span>目前模擬拆分</span>
+          <strong>${formatTwd(result.twEstimated + result.usEstimated * state.usdTwd)}</strong>
+          <small>台股 ${formatTwd(result.twEstimated)} · 美股 ${formatUsd(result.usEstimated)}</small>
         </article>
       </div>
 
       <div class="public-market-head">
         <div>
           <p class="eyebrow">MARKET IMPACT</p>
-          <h2>目前市場影響</h2>
+          <h2>模擬行情依據</h2>
         </div>
-        <p>市場上漲會改善估算損益，下跌會擴大估算虧損。</p>
+        <p>只有模擬損益會受下列行情影響。</p>
       </div>
 
       <div class="public-market-grid">
@@ -475,16 +522,18 @@ window.APP_CONFIG = {
         <article class="public-market-card">
           <span>USD / TWD</span>
           <strong>${number(state.usdTwd).toFixed(3)}</strong>
-          <div class="public-market-change">美股換算台幣匯率</div>
+          <div class="public-market-change">模擬美股換算台幣匯率</div>
           <small>來源：${state.source}</small>
         </article>
       </div>
 
       <div class="public-toolbar">
         <button id="publicRefreshBtn" class="btn primary" type="button">
-          ${state.loading ? "更新中…" : "更新行情"}
+          ${state.loading ? "更新中…" : "手動更新行情"}
         </button>
-        <span class="public-updated-at">最後更新：${updatedText} · 每 60 秒自動更新</span>
+        <span class="public-updated-at">
+          最後更新：${updatedText} · 每 1 小時自動抓取一次行情
+        </span>
       </div>
 
       <div class="public-detail-block">
@@ -493,7 +542,7 @@ window.APP_CONFIG = {
             <p class="eyebrow">DISCLOSED POSITIONS</p>
             <h2>公開提及的個股</h2>
           </div>
-          <p>個股卡片同樣依美股市場幅度做估算，不代表真實持倉損益。</p>
+          <p>本人公開值保留；卡片大字為市場連動模擬值。</p>
         </div>
 
         <div class="public-position-grid">
@@ -501,11 +550,12 @@ window.APP_CONFIG = {
         </div>
 
         <div class="public-disclosure-note">
-          <strong>估算方式：</strong>
-          以 2026/09/04 公開的台股 -NT$320,000、美股 -US$5,800 為基準。
-          台股使用台灣加權指數、美股使用 NASDAQ Composite 相對基準點的漲跌比例調整；
-          美股再依即時 USD/TWD 換算成新台幣，最後與台股相加得到「總收益（台幣）」。
-          因未公開成本與股數，此數字是市場連動估算，不是券商帳戶的精準未實現損益。
+          <strong>兩種總損益的差別：</strong>
+          「羅傑本人說的總損益」固定使用台股 -NT$320,000 與美股 -US$5,800，
+          並以基準匯率 ${disclosed.reportedFxTwd.toFixed(2)} 換算成台幣，之後不會跟市場變動。
+          「模擬總損益」則以同一組公開數字為起點，依台灣加權指數、NASDAQ Composite
+          相對基準的漲跌與最新 USD/TWD 做估算，每 1 小時自動抓取一次行情。
+          因羅傑沒有公開完整成本與股數，模擬值不是券商帳戶的精準損益。
         </div>
       </div>
     `;
@@ -517,21 +567,21 @@ window.APP_CONFIG = {
     const main = document.querySelector("main");
     if (!main || !disclosed) return;
 
-    document.title = "羅傑動態損益戰情室｜吉米狗製作";
+    document.title = "羅傑損益戰情室｜吉米狗製作";
 
     removeMessageBoard();
     hideLegacyFinance();
     installStyle();
 
     const liveRow = document.querySelector(".live-row span:last-child");
-    if (liveRow) liveRow.textContent = "MARKET-ADJUSTED PNL";
+    if (liveRow) liveRow.textContent = "REPORTED / SIMULATED PNL";
 
     const title = document.querySelector(".hero h1");
-    if (title) title.textContent = "羅傑動態損益戰情室";
+    if (title) title.textContent = "羅傑損益戰情室";
 
     const subtitle = document.querySelector(".subtitle");
     if (subtitle) {
-      subtitle.textContent = "以公開損益為基準，跟著台股、美股與美元匯率動態估算";
+      subtitle.textContent = "本人公開損益固定保留，模擬損益每小時跟著台股、美股與匯率更新";
     }
 
     const infoRows = document.querySelectorAll(".roger-info-list > div");
@@ -595,6 +645,7 @@ window.APP_CONFIG = {
 
   async function refreshMarketEstimate() {
     if (state.loading) return;
+
     state.loading = true;
     renderPublicPortfolio();
 
