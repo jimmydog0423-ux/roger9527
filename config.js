@@ -11,8 +11,8 @@ window.APP_CONFIG = {
   ],
 
   /*
-   * 羅傑沒有公開完整成本、股數與即時持倉細節。
-   * 因此不再用推算資料製作即時持倉，畫面只呈現他明確公開過的損益。
+   * 羅傑沒有公開完整成本、股數、買賣價格與即時持倉細節。
+   * 因此不再用推算資料製作即時持倉，只整理他明確公開講過的損益。
    */
   holdings: [],
 
@@ -21,9 +21,9 @@ window.APP_CONFIG = {
     usTotal: -5800,
     positions: [
       { id: "mu", name: "美光", ticker: "MU", pnl: 1500, currency: "USD", status: "持有中" },
-      { id: "skhy", name: "海力士", ticker: "SK Hynix", pnl: 1000, currency: "USD", status: "持有中" },
-      { id: "mrvl", name: "邁威爾", ticker: "MRVL", pnl: -4400, currency: "USD", status: "持有中" },
-      { id: "spcx", name: "火箭", ticker: "SpaceX", pnl: -2100, currency: "USD", status: "持有中" },
+      { id: "skhy", name: "海力士", ticker: "", pnl: 1000, currency: "USD", status: "持有中" },
+      { id: "mrvl", name: "MRVL", ticker: "MRVL", pnl: -4400, currency: "USD", status: "持有中" },
+      { id: "rocket", name: "火箭", ticker: "", pnl: -2100, currency: "USD", status: "持有中" },
       { id: "tsla", name: "特斯拉", ticker: "TSLA", pnl: null, currency: "USD", status: "已賣出" }
     ]
   },
@@ -86,28 +86,54 @@ window.APP_CONFIG = {
     const isLoss = Number(position.pnl) < 0;
     const valueText = isSold ? "已賣出" : usd(position.pnl);
     const stateClass = isSold ? "is-sold" : (isLoss ? "is-loss" : "is-profit");
+    const tickerText = position.ticker || "未公開代號";
 
     return `
       <article class="public-position-card ${stateClass}" data-public-id="${position.id}">
         <div class="public-position-head">
           <div>
-            <span class="public-ticker">${position.ticker}</span>
+            <span class="public-ticker">${tickerText}</span>
             <h3>${position.name}</h3>
           </div>
           <span class="public-status">${position.status}</span>
         </div>
         <strong class="public-position-pnl">${valueText}</strong>
-        <small>${isSold ? "已退出目前持倉統計" : "公開提及損益"}</small>
+        <small>${isSold ? "已退出目前持倉統計" : "羅傑公開提及損益"}</small>
       </article>
     `;
   };
+
+  function removeMessageBoard() {
+    document.querySelector(".message-board-section")?.remove();
+    document.querySelector(".message-ticker-wrap")?.remove();
+    document.getElementById("messageForm")?.remove();
+  }
+
+  function updateAuthorNotice() {
+    const notice = document.getElementById("authorNotice");
+    if (!notice) return;
+
+    const paragraphs = notice.querySelectorAll(".notice-box > p");
+    if (paragraphs[0]) {
+      paragraphs[0].textContent = "hi 我是吉米狗，9/5更新如下";
+    }
+    if (paragraphs[1]) {
+      paragraphs[1].innerHTML = [
+        "1. 投資區改為羅傑公開損益摘要",
+        "2. 移除留言板",
+        "3. 不再推算未公開成本、股數與持倉細節"
+      ].join("<br>");
+    }
+  }
 
   function installPublicPortfolioView() {
     const main = document.querySelector("main");
     if (!main || !disclosed) return;
 
-    // 留言牆直接移除，app.js 因找不到表單也不會再初始化留言功能。
-    document.querySelector(".message-board-section")?.remove();
+    document.title = "羅傑公開損益戰情室｜吉米狗製作";
+
+    // 留言牆直接從畫面 DOM 移除，舊 app.js 因找不到表單也不會再初始化留言功能。
+    removeMessageBoard();
 
     // 舊版即時行情區保留在 DOM 當相容層，但不再顯示。
     document.querySelector(".summary-grid")?.classList.add("legacy-finance-hidden");
@@ -124,11 +150,14 @@ window.APP_CONFIG = {
     if (autoRefreshBtn) autoRefreshBtn.hidden = true;
 
     const liveRow = document.querySelector(".live-row span:last-child");
-    if (liveRow) liveRow.textContent = "PUBLIC PORTFOLIO DISCLOSURE";
+    if (liveRow) liveRow.textContent = "PUBLIC PNL DISCLOSURE";
+
+    const title = document.querySelector(".hero h1");
+    if (title) title.textContent = "羅傑公開損益戰情室";
 
     const subtitle = document.querySelector(".subtitle");
     if (subtitle) {
-      subtitle.textContent = "只整理羅傑公開講過的損益，不推算成本、股數與未公開持倉";
+      subtitle.textContent = "只整理羅傑公開講過的損益，不推算成本、股數、買賣價格與未公開持倉";
     }
 
     // 修正原本「綽號」欄位的錯誤 HTML 標籤。
@@ -138,13 +167,6 @@ window.APP_CONFIG = {
     }
 
     if (document.getElementById("publicPortfolioSection")) return;
-
-    const disclosedPositions = disclosed.positions.filter(item => item.status !== "已賣出");
-    const disclosedSum = disclosedPositions.reduce(
-      (sum, item) => sum + (Number(item.pnl) || 0),
-      0
-    );
-    const undisclosedDifference = disclosed.usTotal - disclosedSum;
 
     const section = document.createElement("section");
     section.id = "publicPortfolioSection";
@@ -162,7 +184,7 @@ window.APP_CONFIG = {
         <article class="public-summary-card is-loss">
           <span>台股總損益</span>
           <strong>${twd(disclosed.taiwanTotal)}</strong>
-          <small>只公開整體，個股明細未公開</small>
+          <small>只公開整體，個股細節未公開</small>
         </article>
 
         <article class="public-summary-card is-loss">
@@ -178,7 +200,7 @@ window.APP_CONFIG = {
             <p class="eyebrow">DISCLOSED US POSITIONS</p>
             <h2>有公開講過的美股個股</h2>
           </div>
-          <p>未公開成本、股數與買賣價格。</p>
+          <p>只顯示公開損益，不補成本、股數與買賣價格。</p>
         </div>
 
         <div class="public-position-grid">
@@ -186,11 +208,8 @@ window.APP_CONFIG = {
         </div>
 
         <div class="public-disclosure-note">
-          四檔仍持有且有公開損益的個股合計為
-          <strong>${usd(disclosedSum)}</strong>，
-          與美股總損益 <strong>${usd(disclosed.usTotal)}</strong> 相差
-          <strong>${usd(undisclosedDifference)}</strong>。
-          這部分只標示為其他未公開部位／損益，不自行分配到任何股票。
+          個股損益屬於羅傑零散公開的數字，可能與「美股總損益」不是同一時間點或同一統計口徑。
+          因此不拿個股加總去反推其他持倉，也不自行補出差額。
         </div>
       </div>
     `;
@@ -201,6 +220,9 @@ window.APP_CONFIG = {
     style.id = "publicPortfolioStyle";
     style.textContent = `
       .legacy-finance-hidden { display: none !important; }
+      .message-board-section,
+      .message-ticker-wrap,
+      #messageForm { display: none !important; }
       .public-portfolio-section { margin-bottom: 34px; }
       .public-section-head,
       .public-detail-title {
@@ -310,7 +332,6 @@ window.APP_CONFIG = {
         color: rgba(255,255,255,.72);
         line-height: 1.8;
       }
-      .public-disclosure-note strong { color: #fff; }
       @media (max-width: 900px) {
         .public-position-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
       }
@@ -327,4 +348,10 @@ window.APP_CONFIG = {
   }
 
   installPublicPortfolioView();
+
+  // 作者公告寫在 script 標籤之後，所以 DOM 完成後再更新一次。
+  window.addEventListener("DOMContentLoaded", () => {
+    removeMessageBoard();
+    updateAuthorNotice();
+  });
 })();
