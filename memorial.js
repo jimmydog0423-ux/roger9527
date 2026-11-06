@@ -238,11 +238,8 @@
     if (portraitClicks === 5) {
       portraitButton.classList.add("is-revealed");
       portraitButton.setAttribute("aria-label", "已揭曉羅傑原本的黑白遺照");
-      $("#portraitHint").textContent = "五次已達成 · 真面目揭曉！祝 V 仔獸早日誕生";
       playBell();
       toast("遺照彩蛋揭曉！祝 V 仔獸早日誕生！");
-    } else {
-      $("#portraitHint").textContent = "已點擊 " + portraitClicks + "／5 次";
     }
   });
 
