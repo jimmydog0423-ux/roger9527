@@ -2,7 +2,7 @@
   "use strict";
 
   // 兩個市場各一張「原網站持倉加權總市值」走勢。
-  // 頁面上的 -700,000 TWD 與 -50,000 USD 是使用者指定的固定追思設定，
+  // 頁面上的 -840,000 TWD 與 -54,000 USD 是使用者指定的固定追思設定，
   // 不由行情計算、也不應被當成真實投資損益。
   const config = window.APP_CONFIG || {};
   const api = window.APP_WORKER;
